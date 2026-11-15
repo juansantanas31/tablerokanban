@@ -1,0 +1,66 @@
+{
+  "tablero": {
+    "id": "tablero-demo-1",
+    "nombre": "Sprint 1 - Tablero de Organización",
+    "columnas": [
+      {
+        "id": "col-por-hacer",
+        "nombre": "Por hacer",
+        "limiteWip": 10
+      },
+      {
+        "id": "col-en-curso",
+        "nombre": "En curso",
+        "limiteWip": 3
+      },
+      {
+        "id": "col-hecho",
+        "nombre": "Hecho",
+        "limiteWip": 50
+      }
+    ],
+    "creadoEn": "2026-11-15T09:00:00.000Z"
+  },
+  "tarjetas": [
+    {
+      "id": "tarjeta-1",
+      "titulo": "Configurar repositorio y reglas de IA",
+      "descripcion": "Verificar que Git esté aislado en la raíz y que las reglas de seguridad protejan .env.",
+      "columnaId": "col-por-hacer",
+      "posicion": 1000,
+      "etiquetas": ["urgente", "documentacion"],
+      "vence": "2026-11-20",
+      "creadoEn": "2026-11-15T09:30:00.000Z"
+    },
+    {
+      "id": "tarjeta-2",
+      "titulo": "Diseñar columna accesible con HTML semántico",
+      "descripcion": "Implementar landmarks semánticos, contraste WCAG AA y soporte completo para teclado.",
+      "columnaId": "col-por-hacer",
+      "posicion": 2000,
+      "etiquetas": ["diseño", "importante"],
+      "vence": "2026-11-25",
+      "creadoEn": "2026-11-15T10:00:00.000Z"
+    },
+    {
+      "id": "tarjeta-3",
+      "titulo": "Integrar estados de interfaz (carga, vacío, error)",
+      "descripcion": "Gestionar esqueleto animado, mensaje de reintento accesible y anuncios aria-live.",
+      "columnaId": "col-por-hacer",
+      "posicion": 3000,
+      "etiquetas": ["desarrollo", "pruebas"],
+      "vence": "2026-11-28",
+      "creadoEn": "2026-11-15T10:30:00.000Z"
+    },
+    {
+      "id": "tarjeta-4",
+      "titulo": "Pruebas unitarias de componentes con Vitest y RTL",
+      "descripcion": "Comprobar renderizado accesible por roles y etiquetas accesibles.",
+      "columnaId": "col-por-hacer",
+      "posicion": 4000,
+      "etiquetas": ["pruebas"],
+      "vence": null,
+      "creadoEn": "2026-11-15T11:00:00.000Z"
+    }
+  ]
+}

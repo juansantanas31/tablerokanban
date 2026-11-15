@@ -1,0 +1,132 @@
+.cardItem {
+  list-style: none;
+}
+
+.card {
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.tagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+}
+
+/* Clases de etiquetas con variables de color accesibles */
+.tagUrgente {
+  background-color: var(--tag-urgente-bg);
+  color: var(--tag-urgente-text);
+  border: 1px solid var(--tag-urgente-text);
+}
+
+.tagImportante {
+  background-color: var(--tag-importante-bg);
+  color: var(--tag-importante-text);
+  border: 1px solid var(--tag-importante-text);
+}
+
+.tagDiseno {
+  background-color: var(--tag-diseño-bg);
+  color: var(--tag-diseño-text);
+  border: 1px solid var(--tag-diseño-text);
+}
+
+.tagDesarrollo {
+  background-color: var(--tag-desarrollo-bg);
+  color: var(--tag-desarrollo-text);
+  border: 1px solid var(--tag-desarrollo-text);
+}
+
+.tagPruebas {
+  background-color: var(--tag-pruebas-bg);
+  color: var(--tag-pruebas-text);
+  border: 1px solid var(--tag-pruebas-text);
+}
+
+.tagDocumentacion {
+  background-color: var(--tag-documentacion-bg);
+  color: var(--tag-documentacion-text);
+  border: 1px solid var(--tag-documentacion-text);
+}
+
+.tagDefault {
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.8125rem;
+}
+
+.dueDate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+}
+
+.dueDateOverdue {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+.actionButton {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--color-primary);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 36px;
+  min-width: 36px;
+}
+
+.actionButton:hover {
+  background-color: var(--bg-subtle);
+}

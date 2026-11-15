@@ -39,7 +39,7 @@ try {
     console.error("❌ [FALLO] Archivos sensibles rastreados en Git:\n", lsFiles);
     errores++;
   }
-} catch (e) {
+} catch {
   console.log("ℹ️ [INFO] Git ls-files no reportó archivos rastreados.");
 }
 
