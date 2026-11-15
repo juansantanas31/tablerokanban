@@ -1,0 +1,101 @@
+.loginContainer {
+  max-width: 440px;
+  margin: 3rem auto;
+  padding: 2rem 1.5rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  width: 90%;
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.subheading {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  min-height: 48px;
+}
+
+.input:focus {
+  border-color: var(--border-focus);
+}
+
+.inputError {
+  border-color: var(--color-error);
+}
+
+.errorText {
+  color: var(--color-error);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.submitButton {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  margin-top: 0.75rem;
+  transition: background-color 0.15s ease;
+}
+
+.submitButton:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.statusMessage {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.statusSuccess {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}

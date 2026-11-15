@@ -1,0 +1,131 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.required {
+  color: var(--color-error);
+  margin-left: 0.25rem;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  min-height: 44px; /* WCAG touch target */
+}
+
+.textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--border-focus);
+}
+
+.inputError {
+  border-color: var(--color-error);
+}
+
+.errorText {
+  color: var(--color-error);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.fieldset {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+}
+
+.legend {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding: 0 0.5rem;
+}
+
+.tagOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.checkboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.cancelButton {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.cancelButton:hover {
+  background-color: var(--bg-subtle);
+}
+
+.submitButton {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.submitButton:hover {
+  background-color: var(--color-primary-hover);
+}

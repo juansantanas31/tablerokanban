@@ -8,7 +8,14 @@
   gap: 1rem;
   box-shadow: var(--shadow-sm);
   width: 100%;
-  max-width: 420px;
+  min-width: 280px;
+  max-width: 380px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.columnDragOver {
+  border-color: var(--color-primary);
+  background-color: var(--bg-subtle);
 }
 
 .header {
@@ -38,6 +45,31 @@
   font-weight: 700;
   padding: 0.15rem 0.6rem;
   border-radius: 9999px;
+}
+
+.countBadgeWarning {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.addCardButton {
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.addCardButton:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--color-primary);
 }
 
 .cardsList {
@@ -132,7 +164,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  min-height: 44px; /* WCAG 2.5.8 touch target */
+  min-height: 44px;
 }
 
 .retryButton:hover {

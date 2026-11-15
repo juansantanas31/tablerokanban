@@ -59,3 +59,32 @@ Esta bitácora documenta de manera transparente y auditable cada intervención d
   - Verificación de seguridad con `node ia/verificar-seguridad-ia.mjs`.
 - **Decisión Técnica:**
   - Cumplir el 100% de los criterios del Hito 1 y preparar el commit correspondiente con historial atómico.
+
+
+### Sesión 03: Implementación de Hito 2 (Navegación Modular, useReducer, Drag & Drop, Filtros y Pruebas Críticas)
+- **Fecha:** 2026-11-15
+- **Propósito:**
+  1. Desarrollar la aplicación modular y navegable con App Router (`/tableros`, `/tableros/[id]`, `/tableros/[id]/tarjetas/[tarjetaId]`, `/login`).
+  2. Implementar el reductor de estado del tablero (`src/reducers/tablero.reducer.ts`) con el cálculo de posición decimal de tarjetas para inserción sin reescritura.
+  3. Integrar las APIs de navegador obligatorias (Sección 5): HTML Drag & Drop API, `localStorage` con fallback seguro (`useLocalStorage`), y `<dialog>` nativo para modales con foco atrapado.
+  4. Proveer alternativa completa por teclado para el movimiento de tarjetas (RF-03, Criterio de Aceptación 1) con anuncios dinámicos vía `AriaLiveAnnouncer`.
+  5. Crear la barra de filtros por texto y etiquetas (RF-05).
+  6. Implementar formularios controlados y validados con Zod (`CrearTarjetaForm`, `CrearTableroModal`, login).
+  7. Escribir pruebas unitarias de los 5 casos críticos del reductor, movimiento por teclado, filtros y validación de formularios con Vitest y RTL.
+- **Interacción / Prompt:**
+  - *"procedamso con el 2 siguiendo las pautas del documento 03-tablero-kanban.md"*
+- **Evidencia Generada:**
+  - `src/reducers/tablero.reducer.ts`: Reductor con lógica pura y `calcularPosicionDecimal`.
+  - `src/hooks/useLocalStorage.ts`: Hook con mejora progresiva y manejo seguro de errores.
+  - `src/components/Modal/ModalDialog.tsx`: Modal nativo con la API de `<dialog>`, atrapa y devuelve el foco.
+  - `src/components/Formularios/CrearTarjetaForm.tsx`: Formulario controlado con validación Zod.
+  - `src/components/Filtros/FiltrosBar.tsx`: Barra de búsqueda y filtrado de etiquetas accesible.
+  - `src/components/Tarjeta/`: Soporte para Drag & Drop nativo y selector de teclado «Mover a...».
+  - `src/components/Columna/`: Soporte para soltar tarjetas (drop targets) y alerta visual de límite WIP.
+  - Rutas del App Router: `/tableros`, `/tableros/[id]`, `/tableros/[id]/tarjetas/[tarjetaId]`, `/login`, `loading.tsx`, `error.tsx`, `not-found.tsx`.
+  - Suites de prueba en `tests/`: 7 archivos y 21 pruebas unitarias aprobadas al 100%.
+- **Validación Humana:**
+  - Ejecución de `npm run check` con 0 errores de ESLint, 0 errores de TypeScript y 21 pruebas aprobadas en Vitest.
+  - Ejecución de `node ia/verificar-seguridad-ia.mjs` con 0 anomalías.
+- **Decisión Técnica:**
+  - Consolidar el Hito 2 en el historial Git del proyecto con commit atómico.

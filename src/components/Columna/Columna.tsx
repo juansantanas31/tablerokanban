@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Columna as ColumnaTipo, Tarjeta as TarjetaTipo } from "@/schemas/tarjeta.schema";
 import { Tarjeta } from "../Tarjeta/Tarjeta";
 import styles from "./Columna.module.css";
@@ -8,25 +11,58 @@ interface ColumnaProps {
   columna: ColumnaTipo;
   tarjetas: TarjetaTipo[];
   estado: EstadoColumna;
+  columnasDisponibles?: ColumnaTipo[];
   mensajeError?: string;
   onReintentar?: () => void;
   onVerDetalle?: (id: string) => void;
+  onMoverTeclado?: (tarjetaId: string, columnaDestinoId: string) => void;
+  onDropTarjeta?: (tarjetaId: string, columnaDestinoId: string) => void;
+  onAgregarTarjeta?: (columnaId: string) => void;
 }
 
 export function Columna({
   columna,
   tarjetas,
   estado,
+  columnasDisponibles = [],
   mensajeError = "No se pudieron cargar las tarjetas.",
   onReintentar,
   onVerDetalle,
+  onMoverTeclado,
+  onDropTarjeta,
+  onAgregarTarjeta,
 }: ColumnaProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
   const columnaIdTitulo = `columna-titulo-${columna.id}`;
+
+  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (!isDragOver) setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const tarjetaId = e.dataTransfer.getData("text/plain");
+    if (tarjetaId && onDropTarjeta) {
+      onDropTarjeta(tarjetaId, columna.id);
+    }
+  };
+
+  const excedeWip = columna.limiteWip ? tarjetas.length >= columna.limiteWip : false;
 
   return (
     <section
-      className={styles.column}
+      className={`${styles.column} ${isDragOver ? styles.columnDragOver : ""}`}
       aria-labelledby={columnaIdTitulo}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       <header className={styles.header}>
         <div className={styles.titleGroup}>
@@ -34,12 +70,24 @@ export function Columna({
             {columna.nombre}
           </h2>
           <span
-            className={styles.countBadge}
-            aria-label={`${tarjetas.length} tarjetas en esta columna`}
+            className={`${styles.countBadge} ${excedeWip ? styles.countBadgeWarning : ""}`}
+            aria-label={`${tarjetas.length} tarjetas de ${columna.limiteWip || 50} permitidas`}
           >
             {tarjetas.length}
+            {columna.limiteWip && ` / ${columna.limiteWip}`}
           </span>
         </div>
+
+        {onAgregarTarjeta && (
+          <button
+            type="button"
+            className={styles.addCardButton}
+            onClick={() => onAgregarTarjeta(columna.id)}
+            aria-label={`Agregar nueva tarjeta a columna ${columna.nombre}`}
+          >
+            + Tarjeta
+          </button>
+        )}
       </header>
 
       {/* Estado: Cargando */}
@@ -98,6 +146,8 @@ export function Columna({
             <Tarjeta
               key={tarjeta.id}
               tarjeta={tarjeta}
+              columnasDisponibles={columnasDisponibles}
+              onMoverTeclado={onMoverTeclado}
               onVerDetalle={onVerDetalle}
             />
           ))}

@@ -11,12 +11,22 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  cursor: grab;
 }
 
 .card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.cardDragging {
+  opacity: 0.4;
+  border: 2px dashed var(--color-primary);
 }
 
 .tagsContainer {
@@ -37,7 +47,6 @@
   line-height: 1.2;
 }
 
-/* Clases de etiquetas con variables de color accesibles */
 .tagUrgente {
   background-color: var(--tag-urgente-bg);
   color: var(--tag-urgente-text);
@@ -100,6 +109,8 @@
   padding-top: 0.5rem;
   border-top: 1px solid var(--border-subtle);
   font-size: 0.8125rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .dueDate {
@@ -109,9 +120,11 @@
   color: var(--text-muted);
 }
 
-.dueDateOverdue {
-  color: var(--color-error);
-  font-weight: 700;
+.actionsGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .actionButton {
@@ -129,4 +142,16 @@
 
 .actionButton:hover {
   background-color: var(--bg-subtle);
+}
+
+.moveSelect {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-height: 36px;
+  cursor: pointer;
 }
