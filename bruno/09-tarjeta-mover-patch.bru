@@ -1,0 +1,23 @@
+meta {
+  name: 09 - Mover Tarjeta con Posicion Decimal (PATCH /api/tableros/:id/tarjetas/:tid/mover - Exito 200)
+  type: http
+  seq: 9
+}
+
+patch {
+  url: http://localhost:3000/api/tableros/tablero-demo-1/tarjetas/tarjeta-1/mover
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer EJEMPLO_FIREBASE_ID_TOKEN_AQUI
+}
+
+body:json {
+  {
+    "columnaId": "col-en-curso",
+    "posicion": 1500
+  }
+}

@@ -1,0 +1,480 @@
+openapi: 3.0.3
+info:
+  title: API Tablero Kanban con Arrastrar y Soltar
+  description: >
+    API REST para el proyecto 03-tablero-kanban.
+    Organización por capas, autenticación mediante cookie de sesión HttpOnly y token Bearer,
+    validación estricta con Zod y persistencia en Firestore (exclusivamente vía Firebase Admin SDK).
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor local de desarrollo
+  - url: https://03-tablero-kanban.vercel.app/api
+    description: Servidor de producción en Vercel
+
+paths:
+  /auth/sesion:
+    post:
+      summary: Crear sesión a partir de idToken de Firebase Auth
+      description: Valida el idToken del SDK cliente y emite una cookie de sesión HttpOnly segura.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - idToken
+              properties:
+                idToken:
+                  type: string
+                  description: Token JWT generado por firebase/auth en el cliente
+      responses:
+        "204":
+          description: Sesión creada exitosamente. Set-Cookie emitido.
+        "400":
+          $ref: "#/components/responses/ErrorValidacion"
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+    delete:
+      summary: Cerrar sesión
+      description: Invalida y elimina la cookie de sesión HttpOnly.
+      responses:
+        "204":
+          description: Sesión cerrada exitosamente. Cookie eliminada.
+
+  /auth/yo:
+    get:
+      summary: Obtener perfil del usuario autenticado
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Datos del usuario autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usuario:
+                    $ref: "#/components/schemas/Usuario"
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+
+  /tableros:
+    get:
+      summary: Listar mis tableros
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Lista de tableros del usuario
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Tablero"
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+    post:
+      summary: Crear nuevo tablero
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+              properties:
+                nombre:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+      responses:
+        "201":
+          description: Tablero creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tablero:
+                    $ref: "#/components/schemas/Tablero"
+        "400":
+          $ref: "#/components/responses/ErrorValidacion"
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+
+  /tableros/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Obtener tablero con sus columnas y tarjetas en una sola respuesta
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Tablero y colección de tarjetas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tablero:
+                    $ref: "#/components/schemas/Tablero"
+                  tarjetas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Tarjeta"
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+        "404":
+          $ref: "#/components/responses/ErrorNoEncontrado"
+    delete:
+      summary: Eliminar un tablero y todas sus tarjetas
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Tablero eliminado
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+        "404":
+          $ref: "#/components/responses/ErrorNoEncontrado"
+
+  /tableros/{id}/tarjetas:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Crear una nueva tarjeta en el tablero
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrearTarjetaInput"
+      responses:
+        "201":
+          description: Tarjeta creada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tarjeta:
+                    $ref: "#/components/schemas/Tarjeta"
+        "400":
+          $ref: "#/components/responses/ErrorValidacion"
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+        "404":
+          $ref: "#/components/responses/ErrorNoEncontrado"
+        "409":
+          $ref: "#/components/responses/ErrorConflicto"
+
+  /tableros/{id}/tarjetas/{tarjetaId}/mover:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tarjetaId
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      summary: Mover tarjeta de columna y/o reordenar posición decimal
+      description: Recalcula la posición como punto medio entre tarjetas vecinas sin reescribir toda la columna.
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - columnaId
+              properties:
+                columnaId:
+                  type: string
+                posicion:
+                  type: number
+      responses:
+        "200":
+          description: Tarjeta movida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tarjeta:
+                    $ref: "#/components/schemas/Tarjeta"
+        "400":
+          $ref: "#/components/responses/ErrorValidacion"
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+        "404":
+          $ref: "#/components/responses/ErrorNoEncontrado"
+
+  /tableros/{id}/tarjetas/{tarjetaId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tarjetaId
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      summary: Editar título, descripción o fecha límite de una tarjeta
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                titulo:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                descripcion:
+                  type: string
+                  maxLength: 500
+                etiquetas:
+                  type: array
+                  items:
+                    type: string
+                vence:
+                  type: string
+                  format: date
+                  nullable: true
+      responses:
+        "200":
+          description: Tarjeta actualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tarjeta:
+                    $ref: "#/components/schemas/Tarjeta"
+        "400":
+          $ref: "#/components/responses/ErrorValidacion"
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+        "404":
+          $ref: "#/components/responses/ErrorNoEncontrado"
+    delete:
+      summary: Eliminar una tarjeta
+      security:
+        - CookieAuth: []
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Tarjeta eliminada
+        "401":
+          $ref: "#/components/responses/ErrorNoAutenticado"
+        "404":
+          $ref: "#/components/responses/ErrorNoEncontrado"
+
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: sesion
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Usuario:
+      type: object
+      properties:
+        uid:
+          type: string
+        correo:
+          type: string
+          nullable: true
+        rol:
+          type: string
+
+    Columna:
+      type: object
+      required:
+        - id
+        - nombre
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        limiteWip:
+          type: integer
+          nullable: true
+
+    Tablero:
+      type: object
+      required:
+        - id
+        - nombre
+        - columnas
+        - creadoEn
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        columnas:
+          type: array
+          items:
+            $ref: "#/components/schemas/Columna"
+        creadoEn:
+          type: string
+          format: date-time
+
+    Tarjeta:
+      type: object
+      required:
+        - id
+        - titulo
+        - columnaId
+        - posicion
+        - etiquetas
+        - creadoEn
+      properties:
+        id:
+          type: string
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        columnaId:
+          type: string
+        posicion:
+          type: number
+        etiquetas:
+          type: array
+          items:
+            type: string
+        vence:
+          type: string
+          format: date
+          nullable: true
+        creadoEn:
+          type: string
+          format: date-time
+
+    CrearTarjetaInput:
+      type: object
+      required:
+        - titulo
+        - columnaId
+      properties:
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 100
+        descripcion:
+          type: string
+          maxLength: 500
+        columnaId:
+          type: string
+        posicion:
+          type: number
+        etiquetas:
+          type: array
+          items:
+            type: string
+        vence:
+          type: string
+          format: date
+          nullable: true
+
+    ErrorRespuesta:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        detalles:
+          type: array
+          items:
+            type: object
+            properties:
+              campo:
+                type: string
+              mensaje:
+                type: string
+
+  responses:
+    ErrorValidacion:
+      description: Error de validación Zod (400)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorRespuesta"
+
+    ErrorNoAutenticado:
+      description: Falta sesión o token inválido (401)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorRespuesta"
+
+    ErrorProhibido:
+      description: Sin permisos o fallo CSRF (403)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorRespuesta"
+
+    ErrorNoEncontrado:
+      description: Recurso no encontrado o ajeno (404)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorRespuesta"
+
+    ErrorConflicto:
+      description: Conflicto o cupo máximo de 50 tarjetas por columna alcanzado (409)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorRespuesta"

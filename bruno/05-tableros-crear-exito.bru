@@ -1,0 +1,22 @@
+meta {
+  name: 05 - Crear Tablero (POST /api/tableros - Exito 201)
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:3000/api/tableros
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer EJEMPLO_FIREBASE_ID_TOKEN_AQUI
+}
+
+body:json {
+  {
+    "nombre": "Sprint 3 - API REST y Persistencia"
+  }
+}

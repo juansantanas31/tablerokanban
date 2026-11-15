@@ -1,0 +1,15 @@
+meta {
+  name: 02 - Obtener Usuario Autenticado (GET /api/auth/yo - Exito 200)
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:3000/api/auth/yo
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer EJEMPLO_FIREBASE_ID_TOKEN_AQUI
+}

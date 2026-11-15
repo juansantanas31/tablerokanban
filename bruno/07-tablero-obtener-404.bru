@@ -1,0 +1,15 @@
+meta {
+  name: 07 - Obtener Tablero Ajeno o Inexistente (GET /api/tableros/:id - Error 404)
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://localhost:3000/api/tableros/tablero-inexistente-o-ajeno
+  body: none
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer EJEMPLO_FIREBASE_ID_TOKEN_AQUI
+}

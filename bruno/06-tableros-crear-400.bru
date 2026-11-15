@@ -1,0 +1,22 @@
+meta {
+  name: 06 - Crear Tablero Invalido (POST /api/tableros - Error 400)
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:3000/api/tableros
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer EJEMPLO_FIREBASE_ID_TOKEN_AQUI
+}
+
+body:json {
+  {
+    "nombre": "   "
+  }
+}

@@ -1,0 +1,26 @@
+meta {
+  name: 08 - Crear Tarjeta en Tablero (POST /api/tableros/:id/tarjetas - Exito 201)
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://localhost:3000/api/tableros/tablero-demo-1/tarjetas
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer EJEMPLO_FIREBASE_ID_TOKEN_AQUI
+}
+
+body:json {
+  {
+    "titulo": "Implementar pruebas de integración de la API",
+    "descripcion": "Verificar capas Route Handler -> Servicio -> Repositorio",
+    "columnaId": "col-por-hacer",
+    "etiquetas": ["desarrollo", "pruebas"],
+    "vence": "2026-11-30"
+  }
+}

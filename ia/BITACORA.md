@@ -88,3 +88,31 @@ Esta bitácora documenta de manera transparente y auditable cada intervención d
   - Ejecución de `node ia/verificar-seguridad-ia.mjs` con 0 anomalías.
 - **Decisión Técnica:**
   - Consolidar el Hito 2 en el historial Git del proyecto con commit atómico.
+
+
+### Sesión 04: Implementación de Hito 3 (API REST por Capas, Firebase Admin, openapi.yaml, Bruno y Pruebas de API)
+- **Fecha:** 2026-11-15
+- **Propósito:**
+  1. Construir la API REST por capas en `src/app/api/**` cumpliendo con la Sección 9 de `03-tablero-kanban.md`.
+  2. Implementar repositorios de Firestore (`src/repositories/`) exclusivamente mediante Firebase Admin SDK (`firebase-admin`).
+  3. Desarrollar la capa de servicios (`src/services/`) con lógica de negocio pura y testeable.
+  4. Implementar manejo uniforme de errores (`src/lib/errores.ts` y `src/lib/http.ts`) y autenticación de sesión con cookie HttpOnly y Bearer token (`src/lib/auth.ts`).
+  5. Crear los endpoints oficiales: `POST /api/auth/sesion`, `DELETE /api/auth/sesion`, `GET /api/auth/yo`, `GET /api/tableros`, `POST /api/tableros`, `GET /api/tableros/:id`, `DELETE /api/tableros/:id`, `POST /api/tableros/:id/tarjetas`, `PATCH /api/tableros/:id/tarjetas/:tid/mover`, `PATCH /api/tableros/:id/tarjetas/:tid`, `DELETE /api/tableros/:id/tarjetas/:tid`.
+  6. Redactar la especificación completa OpenAPI 3.0 en `openapi.yaml`.
+  7. Crear la colección oficial de solicitudes en `bruno/` con 9 archivos `.bru` (casos exitosos, 400, 401 y 404).
+  8. Desarrollar suites de pruebas automatizadas de la API con `vi.mock` simulando Firebase Admin y prueba de integración (ruta -> servicio -> repositorio).
+- **Interacción / Prompt:**
+  - *"continuemos"*
+- **Evidencia Generada:**
+  - `src/lib/`: `errores.ts`, `http.ts`, `firebase-admin.ts`, `auth.ts`.
+  - `src/repositories/`: `tablero.repository.ts`, `tarjeta.repository.ts`.
+  - `src/services/`: `tablero.service.ts`, `tarjeta.service.ts`.
+  - `src/app/api/`: Route Handlers para autenticación, tableros y tarjetas.
+  - `openapi.yaml`: Documentación OpenAPI 3.0.3 con esquemas, rutas y respuestas.
+  - `bruno/`: Colección Bruno versionable con 9 solicitudes HTTP probando casos normales y de error.
+  - `tests/api/`: `auth.test.ts`, `tableros.test.ts` (integración y 404), `tarjetas-mover.test.ts`. Total: 27 pruebas unitarias aprobadas.
+- **Validación Humana:**
+  - Ejecución de `npm run check`: 0 errores ESLint, 0 errores TypeScript, 27 pruebas aprobadas en Vitest.
+  - Ejecución de `node ia/verificar-seguridad-ia.mjs`: 0 anomalías.
+- **Decisión Técnica:**
+  - Consolidar el Hito 3 en el historial Git del repositorio con commit atómico.
