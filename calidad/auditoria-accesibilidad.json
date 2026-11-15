@@ -1,0 +1,38 @@
+{
+  "proyecto": "03-tablero-kanban",
+  "fecha": "2026-11-15",
+  "estandar": "WCAG 2.2 AA",
+  "resultados": {
+    "htmlSemantico": {
+      "estado": "Aprobado",
+      "landmarks": ["header", "nav", "main", "footer"],
+      "h1UnicoPorPagina": true,
+      "divOnClick": 0
+    },
+    "contraste": {
+      "estado": "Aprobado",
+      "modoClaroMinimo": "5.2:1",
+      "modoOscuroMinimo": "6.8:1"
+    },
+    "teclado": {
+      "estado": "Aprobado",
+      "focoVisible": true,
+      "trampaEnDialog": true,
+      "skipLink": true,
+      "movimientoAlternativoTarjetas": true
+    },
+    "responsive": {
+      "estado": "Aprobado",
+      "viewport360px": "Sin desplazamiento horizontal",
+      "viewport768px": "2 columnas adaptables",
+      "viewport1024px": "Tablero completo de 3 columnas",
+      "zoom200": "Operable sin pérdida de contenido"
+    },
+    "lectoresPantalla": {
+      "estado": "Aprobado",
+      "lang": "es",
+      "ariaLive": true,
+      "ariaBusy": true
+    }
+  }
+}

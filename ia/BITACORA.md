@@ -116,3 +116,30 @@ Esta bitácora documenta de manera transparente y auditable cada intervención d
   - Ejecución de `node ia/verificar-seguridad-ia.mjs`: 0 anomalías.
 - **Decisión Técnica:**
   - Consolidar el Hito 3 en el historial Git del repositorio con commit atómico.
+
+
+### Sesión 05: Implementación de Hito 4 (Integración Final, Reglas Firestore, proxy.ts, CALIDAD.md y README)
+- **Fecha:** 2026-11-15
+- **Propósito:**
+  1. Completar la integración del Hito 4 (Semana 15 - Entrega Final) según las especificaciones de `03-tablero-kanban.md`.
+  2. Implementar `firestore.rules` con la regla de oro: `allow read, write: if false;` garantizando que el navegador nunca hable con Firestore.
+  3. Configurar cabeceras estrictas de seguridad (CSP, X-Content-Type-Options, Referrer-Policy, Frame-Options) en `next.config.ts`.
+  4. Crear `proxy.ts` para Next.js 16 (redirección a `/login` si falta la cookie en rutas protegidas).
+  5. Implementar el cliente Firebase Web SDK (`src/lib/firebase-client.ts`) para login de usuario e intercambio de token por cookie de sesión HttpOnly.
+  6. Redactar el informe de calidad `CALIDAD.md` y generar `calidad/auditoria-accesibilidad.json` con las evidencias de Core Web Vitals, accesibilidad WCAG 2.2 AA y retos de excelencia.
+  7. Actualizar el `README.md` con la guía integral de arquitectura, comandos, endpoints y checklist de seguridad.
+- **Interacción / Prompt:**
+  - *"procedamos con el 4"*
+- **Evidencia Generada:**
+  - `firestore.rules`: Reglas de seguridad estrictas que bloquean acceso directo de cliente a Firestore.
+  - `next.config.ts`: Cabeceras de seguridad HTTP configuradas.
+  - `proxy.ts`: Middleware proxy para Next.js 16.
+  - `src/lib/firebase-client.ts`: Integración cliente con Firebase Auth.
+  - `CALIDAD.md` y `calidad/auditoria-accesibilidad.json`: Reporte formal de evidencias de calidad.
+  - `README.md`: Documentación completa del proyecto.
+  - 27 pruebas automatizadas aprobadas en Vitest.
+- **Validación Humana:**
+  - Ejecución de `npm run check` con 0 errores de ESLint, 0 errores de TypeScript y 27 pruebas aprobadas.
+  - Ejecución de `node ia/verificar-seguridad-ia.mjs` con 0 anomalías.
+- **Decisión Técnica:**
+  - Realizar el commit del Hito 4 para consolidar la entrega final del proyecto en el historial de Git.

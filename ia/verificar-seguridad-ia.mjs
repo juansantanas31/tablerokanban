@@ -12,7 +12,7 @@ import path from "path";
 import { execSync } from "child_process";
 
 const rootDir = process.cwd();
-console.log("🔍 Ejecutando verificación de seguridad de IA en:", rootDir);
+console.log(" Ejecutando verificación de seguridad de IA en:", rootDir);
 
 let errores = 0;
 
@@ -20,13 +20,13 @@ let errores = 0;
 try {
   const gitignore = fs.readFileSync(path.join(rootDir, ".gitignore"), "utf-8");
   if (gitignore.includes(".env*")) {
-    console.log("✅ [OK] .gitignore contiene la regla de exclusión '.env*'.");
+    console.log(" [OK] .gitignore contiene la regla de exclusión '.env*'.");
   } else {
-    console.error("❌ [FALLO] .gitignore NO contiene la exclusión '.env*'.");
+    console.error(" [FALLO] .gitignore NO contiene la exclusión '.env*'.");
     errores++;
   }
 } catch (e) {
-  console.error("❌ [FALLO] No se pudo leer el archivo .gitignore:", e.message);
+  console.error(" [FALLO] No se pudo leer el archivo .gitignore:", e.message);
   errores++;
 }
 
@@ -34,13 +34,13 @@ try {
 try {
   const lsFiles = execSync("git ls-files .env*").toString().trim();
   if (lsFiles === "") {
-    console.log("✅ [OK] Ningún archivo .env está versionado en Git.");
+    console.log(" [OK] Ningún archivo .env está versionado en Git.");
   } else {
-    console.error("❌ [FALLO] Archivos sensibles rastreados en Git:\n", lsFiles);
+    console.error("[FALLO] Archivos sensibles rastreados en Git:\n", lsFiles);
     errores++;
   }
 } catch {
-  console.log("ℹ️ [INFO] Git ls-files no reportó archivos rastreados.");
+  console.log("ℹ [INFO] Git ls-files no reportó archivos rastreados.");
 }
 
 // 3. Verificar archivos de reglas de IA
@@ -48,13 +48,13 @@ const agentsFile = path.join(rootDir, "AGENTS.md");
 if (fs.existsSync(agentsFile)) {
   const agentsContent = fs.readFileSync(agentsFile, "utf-8");
   if (agentsContent.includes("Restricciones de Seguridad")) {
-    console.log("✅ [OK] AGENTS.md contiene las restricciones de seguridad para la IA.");
+    console.log(" [OK] AGENTS.md contiene las restricciones de seguridad para la IA.");
   } else {
-    console.error("❌ [FALLO] AGENTS.md no tiene la sección de restricciones de seguridad.");
+    console.error(" [FALLO] AGENTS.md no tiene la sección de restricciones de seguridad.");
     errores++;
   }
 } else {
-  console.error("❌ [FALLO] AGENTS.md no existe.");
+  console.error(" [FALLO] AGENTS.md no existe.");
   errores++;
 }
 
@@ -69,7 +69,7 @@ function buscarImportsProhibidos(dir) {
     } else if (/\.(tsx|ts|js|jsx)$/.test(entry.name)) {
       const content = fs.readFileSync(fullPath, "utf-8");
       if (content.includes("firebase/firestore")) {
-        console.error(`❌ [FALLO] Importación prohibida de 'firebase/firestore' en: ${fullPath}`);
+        console.error(` [FALLO] Importación prohibida de 'firebase/firestore' en: ${fullPath}`);
         errores++;
       }
     }
@@ -77,12 +77,12 @@ function buscarImportsProhibidos(dir) {
 }
 
 buscarImportsProhibidos(path.join(rootDir, "src"));
-console.log("✅ [OK] Verificación de importaciones cliente completada.");
+console.log("OK Verificación de importaciones cliente completada.");
 
 if (errores === 0) {
-  console.log("\n🎉 Todas las restricciones de seguridad y calidad están verificadas y conformes.");
+  console.log("\n Todas las restricciones de seguridad y calidad están verificadas y conformes.");
   process.exit(0);
 } else {
-  console.error(`\n⚠️ Se encontraron ${errores} anomalías de seguridad.`);
+  console.error(`\n Se encontraron ${errores} anomalías de seguridad.`);
   process.exit(1);
 }

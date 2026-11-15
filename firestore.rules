@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Regla de oro del proyecto 03-tablero-kanban (Sección 2 y 9.3):
+    // El navegador NUNCA habla directamente con Firestore.
+    // Todas las operaciones se realizan exclusivamente en el servidor a través de Firebase Admin SDK.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

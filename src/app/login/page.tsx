@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { AriaLiveAnnouncer } from "@/components/AriaLive/AriaLiveAnnouncer";
+import { iniciarSesionConCorreo } from "@/lib/firebase-client";
 import styles from "./login.module.css";
 
 const LoginSchema = z.object({
@@ -11,13 +13,15 @@ const LoginSchema = z.object({
 });
 
 export default function LoginPage() {
+  const router = useRouter();
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [mensajeEstado, setMensajeEstado] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(false);
   const [anuncio, setAnuncio] = useState("Formulario de inicio de sesión listo");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrores({});
     setMensajeEstado(null);
@@ -36,9 +40,23 @@ export default function LoginPage() {
       return;
     }
 
-    // En Hito 2 se valida el formulario accesible y controlado en cliente; en Hito 4 se conectará con Firebase Web SDK
-    setMensajeEstado(`Inicio de sesión simulado correctamente para: ${correo}`);
-    setAnuncio(`Sesión validada exitosamente para ${correo}.`);
+    setCargando(true);
+    setAnuncio("Iniciando sesión...");
+
+    try {
+      const res = await iniciarSesionConCorreo(correo, password);
+      setMensajeEstado(`Sesión iniciada exitosamente para ${res.correo}. Redirigiendo...`);
+      setAnuncio("Inicio de sesión exitoso. Redirigiendo a tus tableros.");
+      setTimeout(() => {
+        router.push("/tableros");
+      }, 1000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al iniciar sesión";
+      setErrores({ auth: msg });
+      setAnuncio(`Fallo de autenticación: ${msg}`);
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
@@ -59,6 +77,24 @@ export default function LoginPage() {
         </div>
       )}
 
+      {errores.auth && (
+        <div
+          role="alert"
+          style={{
+            backgroundColor: "var(--color-error-bg)",
+            color: "var(--color-error)",
+            padding: "0.75rem 1rem",
+            borderRadius: "var(--radius-sm)",
+            fontSize: "0.875rem",
+            fontWeight: 600,
+            marginBottom: "1rem",
+            border: "1px solid var(--color-error)",
+          }}
+        >
+          {errores.auth}
+        </div>
+      )}
+
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
         <div className={styles.fieldGroup}>
           <label htmlFor="correo-input" className={styles.label}>
@@ -76,6 +112,7 @@ export default function LoginPage() {
             aria-invalid={!!errores.correo}
             aria-describedby={errores.correo ? "error-correo" : undefined}
             placeholder="usuario@ejemplo.com"
+            disabled={cargando}
           />
           {errores.correo && (
             <span id="error-correo" className={styles.errorText} role="alert">
@@ -100,6 +137,7 @@ export default function LoginPage() {
             aria-invalid={!!errores.password}
             aria-describedby={errores.password ? "error-password" : undefined}
             placeholder="••••••••"
+            disabled={cargando}
           />
           {errores.password && (
             <span id="error-password" className={styles.errorText} role="alert">
@@ -108,8 +146,8 @@ export default function LoginPage() {
           )}
         </div>
 
-        <button type="submit" className={styles.submitButton}>
-          Entrar
+        <button type="submit" className={styles.submitButton} disabled={cargando}>
+          {cargando ? "Verificando..." : "Entrar"}
         </button>
       </form>
     </div>
