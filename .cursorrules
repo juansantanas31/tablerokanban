@@ -1,0 +1,10 @@
+# Reglas del Asistente de IA para Cursor
+
+Consulte AGENTS.md para las instrucciones completas y obligatorias del proyecto.
+
+Puntos clave:
+1. Seguridad: No leer, procesar ni mostrar archivos .env* ni claves secretas.
+2. Alcance: Operar estrictamente dentro del directorio del proyecto.
+3. Arquitectura: Next.js 16 App Router. Componentes de servidor por defecto.
+4. Firestore: Exclusivamente accesible mediante Firebase Admin SDK en el servidor. Nunca importar firebase/firestore en el cliente.
+5. Calidad y Accesibilidad: HTML semántico, WCAG 2.2 AA (teclado, aria-live, contraste, lang="es"), Zod estricto y pruebas con Vitest.
