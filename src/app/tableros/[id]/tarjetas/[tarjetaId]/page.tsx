@@ -56,13 +56,13 @@ export default async function TarjetaDetallePage({ params }: PageProps) {
         </div>
       </header>
 
-      <main className={styles.contentCard} aria-labelledby="detalle-tarjeta-titulo">
+      <section className={styles.contentCard} aria-labelledby="detalle-tarjeta-titulo">
         <TarjetaDetalleContenido
           tarjeta={tarjetaMock}
           columnas={columnasMock}
           tableroNombre={`Sprint 24 · Tablero ${tableroId}`}
         />
-      </main>
+      </section>
 
       {/* Dock de acciones fijo al fondo estilo Stitch */}
       <footer className={styles.bottomActionDock} aria-label="Acciones de la tarjeta">
