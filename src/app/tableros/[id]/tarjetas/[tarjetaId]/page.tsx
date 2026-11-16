@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TarjetaDetalleContenido } from "@/components/TarjetaDetalle/TarjetaDetalleContenido";
 import type { Tarjeta, Columna } from "@/schemas/tarjeta.schema";
+import { Icon } from "@/components/Icon/Icon";
 import styles from "./tarjeta-detalle.module.css";
 
 interface PageProps {
@@ -38,9 +39,7 @@ export default async function TarjetaDetallePage({ params }: PageProps) {
       <header className={styles.subBar}>
         <div className={styles.subBarLeft}>
           <Link href={`/tableros/${tableroId}`} className={styles.backLink}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              arrow_back
-            </span>
+            <Icon name="arrow_back" size={16} />
             <span>Volver al tablero</span>
           </Link>
         </div>
@@ -69,16 +68,12 @@ export default async function TarjetaDetallePage({ params }: PageProps) {
       <footer className={styles.bottomActionDock} aria-label="Acciones de la tarjeta">
         <div className={styles.dockContainer}>
           <Link href={`/tableros/${tableroId}`} className={styles.secondaryAction}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              close
-            </span>
-            Cerrar
+            <Icon name="close" size={16} />
+            <span>Cerrar</span>
           </Link>
           <Link href={`/tableros/${tableroId}`} className={styles.primaryAction}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              check_circle
-            </span>
-            Mover a Revisión
+            <Icon name="check_circle" size={16} />
+            <span>Mover a Revisión</span>
           </Link>
         </div>
       </footer>

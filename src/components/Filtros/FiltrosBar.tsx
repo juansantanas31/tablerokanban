@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/components/Icon/Icon";
 import styles from "./FiltrosBar.module.css";
 
 interface FiltrosBarProps {
@@ -49,7 +50,7 @@ export function FiltrosBar({
       <div className={styles.filterRow}>
         <div className={styles.searchGroup}>
           <div className={styles.searchInputWrapper}>
-            <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
+            <Icon name="search" size={16} className={styles.searchIcon} />
             <label htmlFor="buscar-tarjetas" className="sr-only">
               Buscar por título o descripción
             </label>
@@ -87,9 +88,7 @@ export function FiltrosBar({
             className={`${styles.chip} ${filtroEtiqueta === "importante" ? styles.chipActive : ""}`}
             onClick={() => onCambiarEtiqueta(filtroEtiqueta === "importante" ? null : "importante")}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 13 }}>
-              check
-            </span>
+            <Icon name="check" size={13} />
             <span>Mis tareas</span>
           </button>
 
@@ -136,9 +135,7 @@ export function FiltrosBar({
               onClick={onNuevaTarea}
               aria-label="Crear nueva tarea"
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
-                add
-              </span>
+              <Icon name="add" size={14} />
               <span>Tarea</span>
             </button>
           )}

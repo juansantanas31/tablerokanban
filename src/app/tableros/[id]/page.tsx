@@ -12,6 +12,7 @@ import { FiltrosBar } from "@/components/Filtros/FiltrosBar";
 import { ModalDialog } from "@/components/Modal/ModalDialog";
 import { CrearTarjetaForm } from "@/components/Formularios/CrearTarjetaForm";
 import { TarjetaDetalleContenido } from "@/components/TarjetaDetalle/TarjetaDetalleContenido";
+import { Icon } from "@/components/Icon/Icon";
 import { AriaLiveAnnouncer } from "@/components/AriaLive/AriaLiveAnnouncer";
 import { Tarjeta, Tablero } from "@/schemas/tarjeta.schema";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -173,7 +174,7 @@ export default function TableroDetallePage({ params }: PageProps) {
         <div className={styles.titleRow}>
           <div className={styles.titleLeft}>
             <Link href="/tableros" className={styles.backLink} aria-label="Volver a lista de tableros">
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_back</span>
+              <Icon name="arrow_back" size={15} />
               <span>Tableros</span>
             </Link>
             <h1 className={styles.boardTitle}>
@@ -188,7 +189,7 @@ export default function TableroDetallePage({ params }: PageProps) {
             aria-haspopup="dialog"
             style={{ fontWeight: 600, color: "var(--color-primary)" }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
+            <Icon name="add" size={15} />
             <span>Nueva Tarjeta</span>
           </button>
         </div>

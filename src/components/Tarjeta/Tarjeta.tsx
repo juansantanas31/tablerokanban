@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import type { Tarjeta as TarjetaType, Columna } from "@/schemas/tarjeta.schema";
+import { Icon } from "@/components/Icon/Icon";
 import styles from "./Tarjeta.module.css";
 
 interface TarjetaProps {
@@ -35,12 +36,13 @@ export function Tarjeta({
   // Código mono estilo Linear LIN-XXXX
   const codigoLinear = tarjeta.id.toUpperCase().startsWith("LIN-")
     ? tarjeta.id.toUpperCase()
-    : `LIN-${tarjeta.id.replace(/\D/g, "") || "1042"}`;
+    : `LIN-${tarjeta.id.replace(/\D/g, "") || "1"}`;
 
   // Prioridad con clase y texto
   const esUrgente = tarjeta.etiquetas.includes("urgente");
   const esImportante = tarjeta.etiquetas.includes("importante");
   const textoPrioridad = esUrgente ? "Alta" : esImportante ? "Media" : "Normal";
+  const iconoPrioridad = esUrgente ? "keyboard_double_arrow_up" : esImportante ? "drag_handle" : "check";
   const clasePrioridad = esUrgente
     ? styles.priorityHigh
     : esImportante
@@ -74,10 +76,8 @@ export function Tarjeta({
 
           <div className={styles.topRightActions}>
             <span className={`${styles.priorityBadge} ${clasePrioridad}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>
-                {esUrgente ? "keyboard_double_arrow_up" : esImportante ? "drag_handle" : "check"}
-              </span>
-              {textoPrioridad}
+              <Icon name={iconoPrioridad} size={12} />
+              <span>{textoPrioridad}</span>
             </span>
 
             <button
@@ -89,9 +89,7 @@ export function Tarjeta({
               }}
               aria-label={`Opciones de tarjeta: ${tarjeta.titulo}`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-                more_vert
-              </span>
+              <Icon name="more_vert" size={16} />
             </button>
           </div>
         </div>
@@ -112,10 +110,8 @@ export function Tarjeta({
         <div className={styles.subtasksRow}>
           <div className={styles.subtasksHeader}>
             <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
-                checklist
-              </span>
-              Subtareas
+              <Icon name="checklist" size={13} style={{ color: "var(--text-muted)" }} />
+              <span>Subtareas</span>
             </span>
             <span style={{ fontFamily: "var(--font-mono)" }}>3 / 5</span>
           </div>
@@ -135,18 +131,14 @@ export function Tarjeta({
 
           {tarjeta.vence ? (
             <span className={`${styles.dueInfo} ${esUrgente ? styles.dueInfoUrgent : ""}`}>
-              <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
-                schedule
-              </span>
+              <Icon name="schedule" size={13} />
               <time dateTime={tarjeta.vence}>
                 {tarjeta.vence === "2026-11-20" ? "Hoy" : tarjeta.vence}
               </time>
             </span>
           ) : (
             <span className={styles.dueInfo}>
-              <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
-                event
-              </span>
+              <Icon name="event" size={13} />
               <span>Sin fecha</span>
             </span>
           )}
@@ -187,10 +179,8 @@ export function Tarjeta({
             onClick={() => onVerDetalle?.(tarjeta.id)}
             aria-label={`Ver detalles de tarjeta: ${tarjeta.titulo}`}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
-              open_in_new
-            </span>
-            Detalle
+            <Icon name="open_in_new" size={13} />
+            <span>Detalle</span>
           </button>
         </div>
       </article>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Columna as ColumnaTipo, Tarjeta as TarjetaTipo } from "@/schemas/tarjeta.schema";
 import { Tarjeta } from "../Tarjeta/Tarjeta";
+import { Icon } from "../Icon/Icon";
 import styles from "./Columna.module.css";
 
 export type EstadoColumna = "cargando" | "vacio" | "error" | "exito";
@@ -86,9 +87,7 @@ export function Columna({
             onClick={() => onAgregarTarjeta(columna.id)}
             aria-label={`Agregar nueva tarea a columna ${columna.nombre}`}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "15px" }}>
-              add
-            </span>
+            <Icon name="add" size={14} />
             <span>Tarea</span>
           </button>
         )}
@@ -120,9 +119,7 @@ export function Columna({
               onClick={onReintentar}
               aria-label={`Reintentar carga de tarjetas en columna ${columna.nombre}`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-                refresh
-              </span>
+              <Icon name="refresh" size={15} />
               Reintentar
             </button>
           )}
@@ -132,9 +129,7 @@ export function Columna({
       {/* Estado: Vacío */}
       {estado === "vacio" && (
         <div className={styles.emptyState}>
-          <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "var(--text-muted)" }}>
-            inbox
-          </span>
+          <Icon name="inbox" size={32} style={{ color: "var(--text-muted)" }} />
           <p className={styles.emptyText}>Sin tarjetas en esta columna</p>
           <p className={styles.emptyHelp}>
             Agrega una nueva tarea o arrástrala desde otra columna.

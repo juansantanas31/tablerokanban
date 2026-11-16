@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon } from "@/components/Icon/Icon";
 import styles from "./Header.module.css";
 
 export function Header() {
@@ -10,9 +11,7 @@ export function Header() {
             <span className={styles.brandSub}>Linear Core</span>
             <span className={styles.brandTitle}>
               Tablero Kanban
-              <span className="material-symbols-outlined" style={{ fontSize: "16px", color: "var(--text-muted)" }}>
-                unfold_more
-              </span>
+              <Icon name="unfold_more" size={15} style={{ color: "var(--text-muted)", marginLeft: 2 }} />
             </span>
           </Link>
         </div>
@@ -24,9 +23,7 @@ export function Header() {
             title="Inicio / Hito 1"
             aria-label="Inicio y Demostración"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-              home
-            </span>
+            <Icon name="home" size={18} />
           </Link>
           <Link
             href="/tableros"
@@ -34,9 +31,7 @@ export function Header() {
             title="Mis Tableros"
             aria-label="Mis Tableros"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-              view_kanban
-            </span>
+            <Icon name="view_kanban" size={18} />
           </Link>
           <Link
             href="/login"
@@ -44,14 +39,10 @@ export function Header() {
             title="Iniciar Sesión"
             aria-label="Iniciar Sesión"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-              login
-            </span>
+            <Icon name="login" size={18} />
           </Link>
-          <div className={styles.avatar} aria-hidden="true">
-            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-              person
-            </span>
+          <div className={styles.avatar} aria-hidden="true" title="Usuario">
+            <Icon name="person" size={16} />
           </div>
         </nav>
       </div>

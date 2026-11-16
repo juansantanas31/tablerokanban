@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Tarjeta, Columna } from "@/schemas/tarjeta.schema";
+import { Icon } from "@/components/Icon/Icon";
 import styles from "./TarjetaDetalleContenido.module.css";
 
 interface Subtarea {
@@ -170,9 +171,7 @@ export function TarjetaDetalleContenido({
       {/* Toast Notification Pill */}
       {toastMessage && (
         <div className={styles.toast} role="status" aria-live="polite">
-          <span className="material-symbols-outlined" style={{ fontSize: 16, color: "#34d399" }}>
-            check_circle
-          </span>
+          <Icon name="check_circle" size={16} style={{ color: "#34d399" }} />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -198,9 +197,7 @@ export function TarjetaDetalleContenido({
             >
               <span className={styles.statusDot}></span>
               <span>{estadoActual}</span>
-              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
-                expand_more
-              </span>
+              <Icon name="expand_more" size={14} />
             </button>
 
             {isStatusMenuOpen && (
@@ -243,9 +240,7 @@ export function TarjetaDetalleContenido({
               aria-label="Más acciones de la tarea"
               aria-expanded={isActionMenuOpen}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                more_vert
-              </span>
+              <Icon name="more_vert" size={18} />
             </button>
 
             {isActionMenuOpen && (
@@ -258,9 +253,7 @@ export function TarjetaDetalleContenido({
                     showToast("Enlace copiado al portapapeles");
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
-                    share
-                  </span>
+                  <Icon name="share" size={15} />
                   Compartir
                 </button>
                 <button
@@ -271,9 +264,7 @@ export function TarjetaDetalleContenido({
                     showToast("Tarea archivada");
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
-                    archive
-                  </span>
+                  <Icon name="archive" size={15} />
                   Archivar
                 </button>
                 <button
@@ -284,9 +275,7 @@ export function TarjetaDetalleContenido({
                     showToast("Vista previa duplicada");
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
-                    content_copy
-                  </span>
+                  <Icon name="content_copy" size={15} />
                   Duplicar
                 </button>
               </div>
@@ -309,9 +298,7 @@ export function TarjetaDetalleContenido({
       <section className={styles.bentoGrid} aria-label="Metadatos de la tarea">
         <div className={styles.bentoRow}>
           <span className={styles.bentoLabel}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              person
-            </span>
+            <Icon name="person" size={16} />
             Asignado a
           </span>
           <span className={styles.bentoValue}>
@@ -324,16 +311,12 @@ export function TarjetaDetalleContenido({
 
         <div className={styles.bentoRow}>
           <span className={styles.bentoLabel}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              signal_cellular_alt
-            </span>
+            <Icon name="signal_cellular_alt" size={16} />
             Prioridad
           </span>
           <span className={styles.bentoValue}>
             <span className={styles.priorityBadge}>
-              <span className="material-symbols-outlined" style={{ fontSize: 12 }}>
-                arrow_upward
-              </span>
+              <Icon name="keyboard_double_arrow_up" size={12} />
               <span>Alta</span>
             </span>
           </span>
@@ -343,9 +326,7 @@ export function TarjetaDetalleContenido({
 
         <div className={styles.bentoRow}>
           <span className={styles.bentoLabel}>
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              cycle
-            </span>
+            <Icon name="cycle" size={16} />
             Sprint
           </span>
           <span className={styles.bentoValue}>
@@ -357,9 +338,7 @@ export function TarjetaDetalleContenido({
           <div className={styles.bentoMiniCard}>
             <span className={styles.bentoMiniLabel}>Estimación</span>
             <span className={styles.bentoMiniValue}>
-              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
-                analytics
-              </span>
+              <Icon name="analytics" size={14} />
               5 story points
             </span>
           </div>
@@ -367,9 +346,7 @@ export function TarjetaDetalleContenido({
           <div className={styles.bentoMiniCard}>
             <span className={styles.bentoMiniLabel}>Fecha límite</span>
             <span className={styles.bentoMiniValue}>
-              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
-                calendar_today
-              </span>
+              <Icon name="calendar_today" size={14} />
               {tarjeta.vence || "18 de Octubre"}
             </span>
           </div>
@@ -380,9 +357,7 @@ export function TarjetaDetalleContenido({
             <div className={styles.divider}></div>
             <div className={styles.bentoRow}>
               <span className={styles.bentoLabel}>
-                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-                  label
-                </span>
+                <span style={{ fontSize: 13 }}>🏷️</span>
                 Etiquetas
               </span>
               <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
@@ -414,9 +389,7 @@ export function TarjetaDetalleContenido({
         <div className={styles.archHeader}>
           <span className={styles.archTitle}>Topología de Despliegue</span>
           <span className={styles.archBadge}>
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
-              cloud_sync
-            </span>
+            <Icon name="cloud_sync" size={14} />
             GCP Multi-Zone
           </span>
         </div>
@@ -432,9 +405,7 @@ export function TarjetaDetalleContenido({
       <section className={styles.subtasksSection} aria-label="Subtareas de la tarea">
         <div className={styles.subtasksTitleRow}>
           <h3 className={styles.subtasksHeader}>
-            <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
-              checklist
-            </span>
+            <Icon name="checklist" size={17} />
             Subtareas
           </h3>
           <span className={styles.subtaskPill}>
@@ -503,9 +474,7 @@ export function TarjetaDetalleContenido({
             className={styles.addSubtaskBtn}
             onClick={() => setIsAddingSubtask(true)}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
-              add
-            </span>
+            <Icon name="add" size={15} />
             Añadir subtarea
           </button>
         )}
@@ -514,9 +483,7 @@ export function TarjetaDetalleContenido({
       {/* Actividad Reciente & Comentarios */}
       <section className={styles.commentsSection} aria-label="Historial y comentarios">
         <h3 className={styles.commentsHeader}>
-          <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
-            forum
-          </span>
+          <Icon name="forum" size={17} />
           Actividad y Discusión ({comentarios.length})
         </h3>
 
@@ -573,9 +540,7 @@ export function TarjetaDetalleContenido({
             transition: "all 0.2s ease",
           }}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-            {isMovedToReview ? "check_circle" : "rate_review"}
-          </span>
+          <Icon name={isMovedToReview ? "check_circle" : "rate_review"} size={16} />
           {isMovedToReview ? "Enviado a Revisión" : "Mover a Revisión"}
         </button>
       </div>
