@@ -46,6 +46,13 @@ export type Tarjeta = z.infer<typeof TarjetaSchema>;
 export const CrearTarjetaSchema = TarjetaSchema.omit({
   id: true,
   creadoEn: true,
+}).extend({
+  posicion: z.number().positive("La posición debe ser un número positivo").optional(),
+  vence: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "El formato de fecha debe ser YYYY-MM-DD")
+    .nullable()
+    .optional(),
 });
 
 export type CrearTarjetaInput = z.infer<typeof CrearTarjetaSchema>;

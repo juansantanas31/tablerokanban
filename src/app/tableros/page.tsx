@@ -1,45 +1,102 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Tablero, TableroSchema } from "@/schemas/tarjeta.schema";
+import { useRouter } from "next/navigation";
+import { Tablero } from "@/schemas/tarjeta.schema";
 import { ModalDialog } from "@/components/Modal/ModalDialog";
 import { AriaLiveAnnouncer } from "@/components/AriaLive/AriaLiveAnnouncer";
+import { Icon } from "@/components/Icon/Icon";
+import { apiCliente, ApiError } from "@/lib/api-cliente";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import styles from "./tableros.module.css";
 
-const TABLERO_INICIAL: Tablero = {
-  id: "tablero-demo-1",
-  nombre: "Sprint 1 - Tablero de Organización",
-  columnas: [
-    { id: "col-por-hacer", nombre: "Por hacer", limiteWip: 10 },
-    { id: "col-en-curso", nombre: "En curso", limiteWip: 3 },
-    { id: "col-hecho", nombre: "Hecho", limiteWip: 50 },
-  ],
-  creadoEn: "2026-11-15T09:00:00.000Z",
-};
-
 export default function TablerosPage() {
-  const [tableros, setTableros] = useLocalStorage<Tablero[]>("kanban_tableros", [
-    TABLERO_INICIAL,
-  ]);
+  const router = useRouter();
+  const [tableros, setTableros] = useState<Tablero[]>([]);
+  const [estado, setEstado] = useState<"carga" | "error" | "vacio" | "exito">("carga");
+  const [mensajeError, setMensajeError] = useState<string | null>(null);
   const [ultimoTableroId, setUltimoTableroId] = useLocalStorage<string | null>(
     "kanban_ultimo_tablero",
-    "tablero-demo-1"
+    null
   );
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [errorNombre, setErrorNombre] = useState("");
-  const [anuncio, setAnuncio] = useState("Página de tableros lista");
+  const [creando, setCreando] = useState(false);
+  const [anuncio, setAnuncio] = useState("Cargando lista de tableros...");
+
+  const cargarTableros = useCallback(async () => {
+    setEstado("carga");
+    setMensajeError(null);
+    setAnuncio("Cargando tableros desde el servidor...");
+
+    try {
+      const data = await apiCliente.get<{ items: Tablero[] }>("/api/tableros");
+      const items = data.items || [];
+      setTableros(items);
+
+      if (items.length === 0) {
+        setEstado("vacio");
+        setAnuncio("No tienes tableros creados aún.");
+      } else {
+        setEstado("exito");
+        setAnuncio(`Se cargaron ${items.length} tableros exitosamente.`);
+      }
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        setAnuncio("Sesión no válida o expirada. Redirigiendo a inicio de sesión...");
+        router.push("/login");
+        return;
+      }
+
+      const mensaje =
+        err instanceof ApiError ? err.message : "Error al conectar con el servidor.";
+      setMensajeError(mensaje);
+      setEstado("error");
+      setAnuncio(`Error al cargar tableros: ${mensaje}`);
+    }
+  }, [router]);
 
   useEffect(() => {
-    // Si no hay tableros guardados, inicializar con el inicial
-    if (tableros.length === 0) {
-      setTableros([TABLERO_INICIAL]);
-    }
-  }, [tableros.length, setTableros]);
+    let cancelado = false;
 
-  const handleCrearTablero = (e: React.FormEvent) => {
+    apiCliente
+      .get<{ items: Tablero[] }>("/api/tableros")
+      .then((data) => {
+        if (cancelado) return;
+        const items = data.items || [];
+        setTableros(items);
+
+        if (items.length === 0) {
+          setEstado("vacio");
+          setAnuncio("No tienes tableros creados aún.");
+        } else {
+          setEstado("exito");
+          setAnuncio(`Se cargaron ${items.length} tableros exitosamente.`);
+        }
+      })
+      .catch((err: unknown) => {
+        if (cancelado) return;
+        if (err instanceof ApiError && err.status === 401) {
+          router.push("/login");
+          return;
+        }
+
+        const mensaje =
+          err instanceof ApiError ? err.message : "Error al conectar con el servidor.";
+        setMensajeError(mensaje);
+        setEstado("error");
+        setAnuncio(`Error al cargar tableros: ${mensaje}`);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [router]);
+
+  const handleCrearTablero = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorNombre("");
 
@@ -49,28 +106,31 @@ export default function TablerosPage() {
       return;
     }
 
-    const nuevoTablero: Tablero = {
-      id: `tablero-${Date.now()}`,
-      nombre: nombreLimpio,
-      columnas: [
-        { id: `col-por-hacer-${Date.now()}`, nombre: "Por hacer", limiteWip: 10 },
-        { id: `col-en-curso-${Date.now()}`, nombre: "En curso", limiteWip: 5 },
-        { id: `col-hecho-${Date.now()}`, nombre: "Hecho" },
-      ],
-      creadoEn: new Date().toISOString(),
-    };
+    setCreando(true);
+    try {
+      const res = await apiCliente.post<{ tablero: Tablero }>("/api/tableros", {
+        nombre: nombreLimpio,
+      });
 
-    const validacion = TableroSchema.safeParse(nuevoTablero);
-    if (!validacion.success) {
-      setErrorNombre("Error al validar el tablero nuevo.");
-      return;
+      const nuevoTablero = res.tablero;
+      setTableros((prev) => [nuevoTablero, ...prev]);
+      setUltimoTableroId(nuevoTablero.id);
+      setEstado("exito");
+      setAnuncio(`Tablero "${nuevoTablero.nombre}" creado exitosamente.`);
+      setIsModalOpen(false);
+      setNuevoNombre("");
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        router.push("/login");
+        return;
+      }
+      const mensaje =
+        err instanceof ApiError ? err.message : "No se pudo crear el tablero.";
+      setErrorNombre(mensaje);
+      setAnuncio(`Error al crear tablero: ${mensaje}`);
+    } finally {
+      setCreando(false);
     }
-
-    setTableros((prev) => [...prev, validacion.data]);
-    setUltimoTableroId(nuevoTablero.id);
-    setAnuncio(`Tablero "${nuevoTablero.nombre}" creado exitosamente.`);
-    setIsModalOpen(false);
-    setNuevoNombre("");
   };
 
   return (
@@ -100,32 +160,76 @@ export default function TablerosPage() {
         </button>
       </div>
 
-      <ul className={styles.boardsGrid} aria-label="Lista de tableros">
-        {tableros.map((t) => (
-          <li key={t.id}>
-            <article className={styles.boardCard}>
-              <h2 className={styles.boardTitle}>{t.nombre}</h2>
-              <div className={styles.boardMeta}>
-                <span>Columnas: {t.columnas.length}</span>
-              </div>
-              <div className={styles.columnsPreview}>
-                {t.columnas.map((col) => (
-                  <span key={col.id} className={styles.columnPill}>
-                    {col.nombre}
-                  </span>
-                ))}
-              </div>
-              <Link
-                href={`/tableros/${t.id}`}
-                className={styles.openLink}
-                onClick={() => setUltimoTableroId(t.id)}
-              >
-                Abrir Tablero
-              </Link>
-            </article>
-          </li>
-        ))}
-      </ul>
+      {/* Estado de Carga con Esqueleto */}
+      {estado === "carga" && (
+        <div className={styles.boardsGrid} aria-label="Cargando tableros" aria-busy="true">
+          <div className={styles.skeletonCard} />
+          <div className={styles.skeletonCard} />
+          <div className={styles.skeletonCard} />
+        </div>
+      )}
+
+      {/* Estado de Error con Reintento */}
+      {estado === "error" && (
+        <div className={styles.errorState} role="alert">
+          <Icon name="error" size={32} />
+          <p style={{ fontWeight: 600 }}>{mensajeError || "Ocurrió un error al cargar los tableros."}</p>
+          <button type="button" className={styles.retryButton} onClick={cargarTableros}>
+            Reintentar
+          </button>
+        </div>
+      )}
+
+      {/* Estado Vacío */}
+      {estado === "vacio" && (
+        <div className={styles.emptyState}>
+          <Icon name="inbox" size={36} />
+          <p style={{ fontWeight: 700, fontSize: "1.125rem", color: "var(--text-primary)" }}>
+            No tienes tableros disponibles
+          </p>
+          <p style={{ fontSize: "0.875rem" }}>
+            Crea tu primer tablero para comenzar a organizar tus tareas por columnas.
+          </p>
+          <button
+            type="button"
+            className={styles.createButton}
+            onClick={() => setIsModalOpen(true)}
+            style={{ marginTop: "0.5rem" }}
+          >
+            Crear mi primer tablero
+          </button>
+        </div>
+      )}
+
+      {/* Estado de Éxito: Lista de Tableros */}
+      {estado === "exito" && (
+        <ul className={styles.boardsGrid} aria-label="Lista de tableros">
+          {tableros.map((t) => (
+            <li key={t.id}>
+              <article className={styles.boardCard}>
+                <h2 className={styles.boardTitle}>{t.nombre}</h2>
+                <div className={styles.boardMeta}>
+                  <span>Columnas: {t.columnas.length}</span>
+                </div>
+                <div className={styles.columnsPreview}>
+                  {t.columnas.map((col) => (
+                    <span key={col.id} className={styles.columnPill}>
+                      {col.nombre}
+                    </span>
+                  ))}
+                </div>
+                <Link
+                  href={`/tableros/${t.id}`}
+                  className={styles.openLink}
+                  onClick={() => setUltimoTableroId(t.id)}
+                >
+                  Abrir Tablero
+                </Link>
+              </article>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* Modal para crear tablero con <dialog> */}
       <ModalDialog
@@ -133,7 +237,11 @@ export default function TablerosPage() {
         onClose={() => setIsModalOpen(false)}
         titulo="Crear Nuevo Tablero"
       >
-        <form onSubmit={handleCrearTablero} noValidate style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form
+          onSubmit={handleCrearTablero}
+          noValidate
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        >
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             <label htmlFor="nombre-tablero" style={{ fontWeight: 700, fontSize: "0.875rem" }}>
               Nombre del Tablero *
@@ -143,9 +251,10 @@ export default function TablerosPage() {
               type="text"
               value={nuevoNombre}
               onChange={(e) => setNuevoNombre(e.target.value)}
-              placeholder="Ej: Sprint 2 - Funcionalidades Clave"
+              placeholder="Ej: Sprint 24 · Q3 En curso"
               maxLength={100}
               required
+              disabled={creando}
               aria-invalid={!!errorNombre}
               aria-describedby={errorNombre ? "error-nombre-tablero" : undefined}
               style={{
@@ -154,19 +263,33 @@ export default function TablerosPage() {
                 border: "1px solid var(--border-subtle)",
                 fontSize: "1rem",
                 minHeight: "44px",
+                backgroundColor: "var(--bg-surface)",
+                color: "var(--text-primary)",
               }}
             />
             {errorNombre && (
-              <span id="error-nombre-tablero" role="alert" style={{ color: "var(--color-error)", fontSize: "0.8125rem" }}>
+              <span
+                id="error-nombre-tablero"
+                role="alert"
+                style={{ color: "var(--color-error)", fontSize: "0.8125rem" }}
+              >
                 {errorNombre}
               </span>
             )}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "0.75rem",
+              marginTop: "1rem",
+            }}
+          >
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
+              disabled={creando}
               style={{
                 background: "transparent",
                 border: "1px solid var(--border-subtle)",
@@ -174,12 +297,14 @@ export default function TablerosPage() {
                 padding: "0.5rem 1rem",
                 cursor: "pointer",
                 minHeight: "44px",
+                color: "var(--text-secondary)",
               }}
             >
               Cancelar
             </button>
             <button
               type="submit"
+              disabled={creando}
               style={{
                 backgroundColor: "var(--color-primary)",
                 color: "#ffffff",
@@ -191,7 +316,7 @@ export default function TablerosPage() {
                 minHeight: "44px",
               }}
             >
-              Crear Tablero
+              {creando ? "Creando..." : "Crear Tablero"}
             </button>
           </div>
         </form>

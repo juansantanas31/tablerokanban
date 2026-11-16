@@ -42,8 +42,7 @@ export function calcularPosicionDecimal(
 
   // Insertar al principio
   if (indiceDestino <= 0) {
-    const primeraPos = tarjetasOrdenadas[0].posicion;
-    return primeraPos > 1 ? primeraPos / 2 : primeraPos - 1000;
+    return tarjetasOrdenadas[0].posicion / 2;
   }
 
   // Insertar al final

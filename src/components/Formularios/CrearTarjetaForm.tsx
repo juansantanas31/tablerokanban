@@ -70,9 +70,9 @@ export function CrearTarjetaForm({
       titulo: resultado.data.titulo,
       descripcion: resultado.data.descripcion,
       columnaId: resultado.data.columnaId,
-      posicion: resultado.data.posicion,
+      posicion: resultado.data.posicion ?? Date.now(),
       etiquetas: resultado.data.etiquetas,
-      vence: resultado.data.vence,
+      vence: resultado.data.vence ?? null,
       creadoEn: new Date().toISOString(),
     };
 

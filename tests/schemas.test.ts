@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TarjetaSchema } from "@/schemas/tarjeta.schema";
+import { TarjetaSchema, CrearTarjetaSchema } from "@/schemas/tarjeta.schema";
 
 describe("Validación de Esquema Zod - TarjetaSchema", () => {
   it("debe validar correctamente una tarjeta con datos válidos", () => {
@@ -61,5 +61,10 @@ describe("Validación de Esquema Zod - TarjetaSchema", () => {
 
     const resultado = TarjetaSchema.safeParse(tarjetaFechaInvalida);
     expect(resultado.success).toBe(false);
+  });
+
+  it("CrearTarjetaSchema acepta tarjetas sin posicion ni vence (bug del 400)", () => {
+    const r = CrearTarjetaSchema.safeParse({ titulo: "Nueva", columnaId: "col-1" });
+    expect(r.success).toBe(true);
   });
 });

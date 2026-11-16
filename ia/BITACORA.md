@@ -203,3 +203,30 @@ Esta bitácora documenta de manera transparente y auditable cada intervención d
 - **Decisión Técnica:**
   - Eliminar las ligaduras tipográficas web externas en favor de componentes SVG vectoriales nativos para evitar roturas visuales por políticas de seguridad o latencia de red.
 
+
+### Sesión 08: Integración de Cliente API, useOptimistic, Manejo de Conflicto 409 y Ajustes de Schemas
+- **Fecha:** 2026-11-16
+- **Propósito:**
+  1. Implementar cliente HTTP unificado `src/lib/api-cliente.ts` con clase `ApiError` tipada.
+  2. Integrar consumo real de endpoints `/api/tableros` y `/api/tableros/:id` eliminando mocks de `localStorage` y redundancia en landmarks.
+  3. Incorporar `useOptimistic` y `startTransition` en `src/app/tableros/[id]/page.tsx` para movimiento instantáneo de tarjetas con reversión automática en caso de rechazo del servidor (`409` por límite de 50 tarjetas por columna o fallo de red).
+  4. Corregir `CrearTarjetaSchema` para aceptar campos opcionales `posicion` y `vence` evitando el error `400` en creación de tarjetas.
+  5. Asegurar cálculo no negativo en inserción inicial del reductor `calcularPosicionDecimal`.
+  6. Documentar respuesta `409` en `openapi.yaml` y añadir pruebas unitarias correspondientes en `tests/schemas.test.ts` y `tests/api/tarjetas-mover.test.ts`.
+- **Interacción / Prompt:**
+  - *"Preparé tres archivos nuevos y te dejo abajo los cuatro cambios pequeños en archivos existentes. No pude ejecutar nada, así que corre `npm run check` al terminar."*
+- **Evidencia Generada:**
+  - `src/lib/api-cliente.ts`: Cliente `fetch` tipado con captura de `ApiError` y códigos HTTP.
+  - `src/app/tableros/page.tsx`: Lista y creación vía API con estados de carga (esqueleto), vacío y error con reintento.
+  - `src/app/tableros/[id]/page.tsx`: Actualización optimista (`useOptimistic`), alerta visible `role="alert"` y reversión funcional ante `409`.
+  - `src/schemas/tarjeta.schema.ts`, `CrearTarjetaForm.tsx`, `tablero.reducer.ts`, `tarjeta.service.ts`: Correcciones aplicadas.
+  - `openapi.yaml`: Respuesta `409` documentada en `/mover`.
+  - `tests/schemas.test.ts`: Prueba para creación sin posición/vence aprobada.
+  - `tests/api/tarjetas-mover.test.ts`: Prueba de respuesta `409` al alcanzar 50 tarjetas aprobada.
+- **Validación Humana:**
+  - `npm run check`: 0 errores ESLint, 0 errores TypeScript, 29/29 pruebas de Vitest aprobadas.
+  - `node ia/verificar-seguridad-ia.mjs`: Todas las reglas de seguridad de IA verificadas.
+- **Decisión Técnica:**
+  - Desacoplar el estado visual optimista de la persistencia base y respaldar la reversión sin recargas manuales.
+
+

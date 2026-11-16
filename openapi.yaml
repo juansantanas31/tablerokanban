@@ -242,6 +242,8 @@ paths:
           $ref: "#/components/responses/ErrorNoAutenticado"
         "404":
           $ref: "#/components/responses/ErrorNoEncontrado"
+        "409":
+          $ref: "#/components/responses/ErrorConflicto"
 
   /tableros/{id}/tarjetas/{tarjetaId}:
     parameters:

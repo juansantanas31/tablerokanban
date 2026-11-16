@@ -110,4 +110,32 @@ describe("API /api/tableros/:id/tarjetas/:tid/mover — Endpoint de Movimiento y
       { columnaId: "col-2", posicion: 3000 }
     );
   });
+
+  it("responde 409 si la columna destino ya tiene 50 tarjetas", async () => {
+    vi.mocked(TarjetaRepository.listarPorTablero).mockResolvedValue(
+      Array.from({ length: 50 }, (_, i) => ({
+        id: `t-${i}`,
+        titulo: `T ${i}`,
+        descripcion: "",
+        columnaId: "col-2",
+        posicion: (i + 1) * 1000,
+        etiquetas: [],
+        vence: null,
+        creadoEn: "2026-11-15T10:00:00.000Z",
+      }))
+    );
+
+    const request = new Request(
+      "http://localhost:3000/api/tableros/tablero-1/tarjetas/tarjeta-1/mover",
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer token_valido" },
+        body: JSON.stringify({ columnaId: "col-2" }),
+      }
+    );
+    const context = { params: Promise.resolve({ id: "tablero-1", tarjetaId: "tarjeta-1" }) };
+
+    const response = await PATCH(request, context);
+    expect(response.status).toBe(409);
+  });
 });

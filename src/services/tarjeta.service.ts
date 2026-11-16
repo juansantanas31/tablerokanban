@@ -76,12 +76,19 @@ export const TarjetaService = {
     }
 
     // Si no se pasó una posición explícita, calcularla al final de la columna destino
+    const todasLasTarjetas = await TarjetaRepository.listarPorTablero(uid, tableroId);
+    const enDestino = todasLasTarjetas.filter(
+      (t) => t.columnaId === columnaDestinoId && t.id !== tarjetaId
+    );
+
+    if (tarjeta.columnaId !== columnaDestinoId && enDestino.length >= 50) {
+      throw new ErrorConflicto(
+        "La columna de destino ha alcanzado el límite máximo de 50 tarjetas (Sección 8)"
+      );
+    }
+
     let posicionFinal = posicion;
     if (posicionFinal === undefined || posicionFinal === null) {
-      const tarjetas = await TarjetaRepository.listarPorTablero(uid, tableroId);
-      const enDestino = tarjetas.filter(
-        (t) => t.columnaId === columnaDestinoId && t.id !== tarjetaId
-      );
       posicionFinal = calcularPosicionDecimal(enDestino, enDestino.length);
     }
 
