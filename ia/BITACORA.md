@@ -180,3 +180,26 @@ Esta bitácora documenta de manera transparente y auditable cada intervención d
   - `node ia/verificar-seguridad-ia.mjs`: Todas las restricciones de seguridad y aislamiento verificadas y conformes.
 - **Decisión Técnica:**
   - Consolidar la integración del diseño Stitch en Git con un commit atómico.
+
+
+### Sesión 07: Diagnóstico y Resolución de Superposición Visual de Textos (Iconos SVG Nativos y CSP)
+- **Fecha:** 2026-11-16
+- **Propósito:**
+  1. Diagnosticar la causa de la superposición de textos en la interfaz (captura de pantalla enviada por el usuario).
+  2. Identificar el fallo de carga de fuentes por ligaduras de `Material Symbols Outlined` provocado por la estricta Content Security Policy (CSP) en `next.config.ts`.
+  3. Reemplazar completamente las ligaduras de texto por un componente SVG nativo e independiente (`Icon.tsx`) para garantizar 100% de fiabilidad visual sin dependencia de red.
+  4. Ajustar los layouts de `Header`, `FiltrosBar`, `Tarjeta`, `Columna` y `Footer` para evitar desbordamientos y colisiones tipográficas.
+- **Interacción / Prompt:**
+  - *"la informacion sigue mostrandose mal hay palabras encima de otras"* (con captura adjunta).
+- **Evidencia Generada:**
+  - `src/components/Icon/Icon.tsx`: Componente SVG nativo con 36 trazados vectoriales vectorizados con `aria-hidden="true"`, `focusable="false"` y tamaño paramétrico.
+  - `next.config.ts`: Ampliación de CSP para permitir `https://fonts.googleapis.com` en `style-src` y `https://fonts.gstatic.com` en `font-src`.
+  - Reemplazo sistemático de las clases `.material-symbols-outlined` en todos los componentes del cliente y servidor por `<Icon name="..." />`.
+  - Corrección de `Tarjeta.module.css` y `Header.module.css` para contener las filas de badges con `flex-wrap`, `gap` estructurado y protección de desbordamiento.
+  - Commits `98fe8f5` y `b386f2d`.
+- **Validación Humana:**
+  - `npm run check`: 0 errores ESLint, 0 errores TypeScript, 27/27 pruebas de Vitest aprobadas.
+  - `node ia/verificar-seguridad-ia.mjs`: Conforme.
+- **Decisión Técnica:**
+  - Eliminar las ligaduras tipográficas web externas en favor de componentes SVG vectoriales nativos para evitar roturas visuales por políticas de seguridad o latencia de red.
+
