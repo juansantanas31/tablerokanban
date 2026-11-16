@@ -142,4 +142,41 @@ Esta bitácora documenta de manera transparente y auditable cada intervención d
   - Ejecución de `npm run check` con 0 errores de ESLint, 0 errores de TypeScript y 27 pruebas aprobadas.
   - Ejecución de `node ia/verificar-seguridad-ia.mjs` con 0 anomalías.
 - **Decisión Técnica:**
-  - Realizar el commit del Hito 4 para consolidar la entrega final del proyecto en el historial de Git.
+  - Realizar el commit del Hito 4 para consolidar la entrega final del proyecto en el historial de Git (hash `a5efdd5`).
+
+
+### Sesión 06: Integración del Diseño UI Stitch (Tablero Kanban Minimalista y Detalle de Tarea LIN-1042)
+- **Fecha:** 2026-11-15
+- **Propósito:**
+  1. Integrar el diseño exportado de Google Stitch (Proyecto: *Tablero Kanban Minimalista*, ID: `4185160347418965793`) respetando Next.js 16 (App Router), React 19, TypeScript, CSS Modules nativo y accesibilidad WCAG 2.2 AA.
+  2. Implementar los tokens de diseño dark mode (#0d0e12, #12141a, #181a22, #1e212b, #252834, #638fff) y fuentes Inter + Google Material Symbols en `src/app/globals.css` y `src/app/layout.tsx`.
+  3. Rediseñar el `Header` con el selector de espacio "Linear Core / Boards", barra de acciones y perfil.
+  4. Rediseñar el `Footer` con el status chip y links semánticos accesibles.
+  5. Rediseñar las tarjetas Kanban (`Tarjeta.tsx` y `Tarjeta.module.css`) con identificador mono (ej. `LIN-3042`), barra de subtareas completadas, etiqueta de prioridad, avatar con iniciales y botón accesible de teclado.
+  6. Rediseñar las columnas (`Columna.tsx` y `Columna.module.css`) con punto indicador de status, contador badge mono y botón rápido de añadir tarea.
+  7. Rediseñar la barra superior de filtros (`FiltrosBar.tsx` y `FiltrosBar.module.css`) con indicador de velocidad de Sprint ("Sprint 24 · Q3"), chips de filtro rápido y botón de nueva tarea.
+  8. Desarrollar el componente completo de Detalle de Tarea (`TarjetaDetalleContenido.tsx` y su módulo CSS) reflejando la Pantalla 2 (Detalle de Tarea LIN-1042):
+     - Barra superior con código mono `LIN-1042` y badge de estado.
+     - Título y descripción con contexto de arquitectura.
+     - Bento Metadata Grid (Asignado con avatar circular, Prioridad Alta con indicador rojo, Sprint, Estimación con Story Points y fecha límite).
+     - Lista interactiva de subtareas con checkboxes funcionales y barra de progreso animada con porcentaje (`aria-valuenow`).
+     - Sección de actividad y discusión con historial de comentarios y formulario de respuesta.
+  9. Integrar el nuevo detalle tanto en el modal nativo `<dialog>` de `src/app/tableros/[id]/page.tsx` como en la ruta individual `src/app/tableros/[id]/tarjetas/[tarjetaId]/page.tsx` con dock de acciones fijo al fondo.
+- **Interacción / Prompt:**
+  - *"usa eata interfaz para el proyecto [...] el codigo que te pase lo usas segun los requrimientos del proyecto en el lenguaje requerido"*
+- **Evidencia Generada:**
+  - `src/app/globals.css`, `src/app/layout.tsx`: Tokens de diseño y fuentes Material Symbols/Inter.
+  - `src/components/Header/`: Componente y estilos actualizados.
+  - `src/components/Footer/`: Componente y estilos actualizados.
+  - `src/components/Tarjeta/`: Tarjeta tipo Linear con identificador y subtasks bar.
+  - `src/components/Columna/`: Columna moderna con badges y puntos de estado.
+  - `src/components/Filtros/`: Barra de sprint health e indicadores de filtro.
+  - `src/components/TarjetaDetalle/`: Componente `TarjetaDetalleContenido.tsx` y `TarjetaDetalleContenido.module.css`.
+  - `src/app/tableros/[id]/page.tsx`: Modal integrado con el diseño de detalle.
+  - `src/app/tableros/[id]/tarjetas/[tarjetaId]/page.tsx`: Vista completa accesible por URL directa.
+  - `src/components/Modal/ModalDialog.module.css`: Modal ampliado con backdrop desenfocado.
+- **Validación Humana:**
+  - `npm run check`: 0 errores ESLint, 0 errores TypeScript, 27/27 pruebas de Vitest aprobadas.
+  - `node ia/verificar-seguridad-ia.mjs`: Todas las restricciones de seguridad y aislamiento verificadas y conformes.
+- **Decisión Técnica:**
+  - Consolidar la integración del diseño Stitch en Git con un commit atómico.

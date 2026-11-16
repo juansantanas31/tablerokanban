@@ -25,7 +25,7 @@ export function Columna({
   tarjetas,
   estado,
   columnasDisponibles = [],
-  mensajeError = "No se pudieron cargar las tarjetas.",
+  mensajeError = "No se pudieron cargar las tareas.",
   onReintentar,
   onVerDetalle,
   onMoverTeclado,
@@ -66,12 +66,13 @@ export function Columna({
     >
       <header className={styles.header}>
         <div className={styles.titleGroup}>
+          <div className={styles.statusDot} aria-hidden="true" />
           <h2 id={columnaIdTitulo} className={styles.title}>
             {columna.nombre}
           </h2>
           <span
             className={`${styles.countBadge} ${excedeWip ? styles.countBadgeWarning : ""}`}
-            aria-label={`${tarjetas.length} tarjetas de ${columna.limiteWip || 50} permitidas`}
+            aria-label={`${tarjetas.length} tareas de ${columna.limiteWip || 50} permitidas`}
           >
             {tarjetas.length}
             {columna.limiteWip && ` / ${columna.limiteWip}`}
@@ -83,9 +84,12 @@ export function Columna({
             type="button"
             className={styles.addCardButton}
             onClick={() => onAgregarTarjeta(columna.id)}
-            aria-label={`Agregar nueva tarjeta a columna ${columna.nombre}`}
+            aria-label={`Agregar nueva tarea a columna ${columna.nombre}`}
           >
-            + Tarjeta
+            <span className="material-symbols-outlined" style={{ fontSize: "15px" }}>
+              add
+            </span>
+            <span>Tarea</span>
           </button>
         )}
       </header>
@@ -101,7 +105,7 @@ export function Columna({
           <div className={styles.skeletonCard} aria-hidden="true" />
           <div className={styles.skeletonCard} aria-hidden="true" />
           <div className={styles.skeletonCard} aria-hidden="true" />
-          <span className="sr-only">Cargando tarjetas...</span>
+          <span className="sr-only">Cargando tareas...</span>
         </div>
       )}
 
@@ -116,7 +120,9 @@ export function Columna({
               onClick={onReintentar}
               aria-label={`Reintentar carga de tarjetas en columna ${columna.nombre}`}
             >
-              <span aria-hidden="true">🔄</span>
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                refresh
+              </span>
               Reintentar
             </button>
           )}
@@ -126,12 +132,12 @@ export function Columna({
       {/* Estado: Vacío */}
       {estado === "vacio" && (
         <div className={styles.emptyState}>
-          <span className={styles.emptyIcon} aria-hidden="true">
-            📂
+          <span className="material-symbols-outlined" style={{ fontSize: "28px", color: "var(--text-muted)" }}>
+            inbox
           </span>
           <p className={styles.emptyText}>Sin tarjetas en esta columna</p>
           <p className={styles.emptyHelp}>
-            Agrega una nueva tarjeta o arrástrala desde otra columna.
+            Agrega una nueva tarea o arrástrala desde otra columna.
           </p>
         </div>
       )}

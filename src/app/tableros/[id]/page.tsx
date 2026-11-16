@@ -11,6 +11,7 @@ import { Columna } from "@/components/Columna/Columna";
 import { FiltrosBar } from "@/components/Filtros/FiltrosBar";
 import { ModalDialog } from "@/components/Modal/ModalDialog";
 import { CrearTarjetaForm } from "@/components/Formularios/CrearTarjetaForm";
+import { TarjetaDetalleContenido } from "@/components/TarjetaDetalle/TarjetaDetalleContenido";
 import { AriaLiveAnnouncer } from "@/components/AriaLive/AriaLiveAnnouncer";
 import { Tarjeta, Tablero } from "@/schemas/tarjeta.schema";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -250,46 +251,13 @@ export default function TableroDetallePage({ params }: PageProps) {
         <ModalDialog
           isOpen={!!tarjetaDetalle}
           onClose={() => setTarjetaDetalle(null)}
-          titulo={tarjetaDetalle.titulo}
+          titulo="Detalle de Tarea"
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {tarjetaDetalle.descripcion ? (
-              <p style={{ color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                {tarjetaDetalle.descripcion}
-              </p>
-            ) : (
-              <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
-                Sin descripción detallada.
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {tarjetaDetalle.etiquetas.map((tag) => (
-                <span
-                  key={tag}
-                  style={{
-                    backgroundColor: "var(--bg-subtle)",
-                    color: "var(--text-secondary)",
-                    padding: "0.2rem 0.5rem",
-                    borderRadius: "var(--radius-sm)",
-                    fontSize: "0.8125rem",
-                    fontWeight: 700,
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "0.75rem", fontSize: "0.875rem" }}>
-              <p>
-                <strong>Fecha límite:</strong> {tarjetaDetalle.vence || "Sin fecha asignada"}
-              </p>
-              <p style={{ marginTop: "0.25rem" }}>
-                <strong>Posición decimal:</strong> {tarjetaDetalle.posicion}
-              </p>
-            </div>
-          </div>
+          <TarjetaDetalleContenido
+            tarjeta={tarjetaDetalle}
+            columnas={state.tablero?.columnas}
+            tableroNombre={state.tablero?.nombre || "Sprint 24"}
+          />
         </ModalDialog>
       )}
     </div>
