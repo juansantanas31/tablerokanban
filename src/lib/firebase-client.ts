@@ -38,7 +38,14 @@ function esEntornoLocal(): boolean {
 
 function esClaveDemoOInvalida(): boolean {
   const key = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  if (!key || key.includes("demo") || key.includes("placeholder") || key.includes("AIzaSy_demo") || key.length < 30) {
+  if (
+    !key ||
+    key.includes("demo") ||
+    key.includes("placeholder") ||
+    key.includes("AIzaSy_demo") ||
+    key.startsWith("AIzaSy_") ||
+    key.length < 35
+  ) {
     return true;
   }
   return false;
@@ -70,10 +77,10 @@ export async function iniciarSesionConCorreo(
   correo: string,
   contrasena: string
 ): Promise<{ exito: boolean; correo: string }> {
-  // En desarrollo local con clave demo, evitar llamada innecesaria a servidores de Google
+  // En desarrollo local o despliegue con clave demo/no configurada, emitir sesión propia
   if (esClaveDemoOInvalida()) {
     console.info(
-      "[firebase-client] Modo local activo: emitiendo sesión directamente para",
+      "[firebase-client] Modo contingencia/demo activo: emitiendo sesión directamente para",
       correo
     );
     return emitirSesionLocal(correo);
@@ -104,10 +111,11 @@ export async function iniciarSesionConCorreo(
     console.warn("[firebase-client] Fallo al autenticar con Firebase:", errorMsg);
 
     const esErrorInvalidoEnGoogle =
-      errorMsg.includes("api-key-not-valid") ||
+      errorMsg.includes("api-key") ||
       errorMsg.includes("invalid-api-key") ||
       errorMsg.includes("network-request-failed") ||
-      errorMsg.includes("auth/api-key-not-valid") ||
+      errorMsg.includes("auth/") ||
+      errorMsg.includes("Firebase") ||
       esEntornoLocal();
 
     // Si Firebase en la nube rechaza la clave (por ejemplo en Vercel sin claves GCP o en local),

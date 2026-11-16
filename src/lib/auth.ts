@@ -81,18 +81,30 @@ export async function requerirUsuario(request: Request): Promise<UsuarioSesion> 
 
 /**
  * Comprueba que el encabezado Origin coincida con el host para prevenir CSRF en mutaciones (Sección 9.1).
+ * Soporta puertos locales y proxies reversos / Vercel (x-forwarded-host).
  */
 export function comprobarOrigen(request: Request): void {
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
+  const forwardedHost = request.headers.get("x-forwarded-host");
 
-  if (origin && host) {
+  if (origin && (host || forwardedHost)) {
     try {
       const originHost = new URL(origin).host;
-      if (originHost !== host) {
+      const hostSinPuerto = host ? host.split(":")[0] : null;
+      const originHostSinPuerto = originHost.split(":")[0];
+      const forwardedHostSinPuerto = forwardedHost ? forwardedHost.split(":")[0] : null;
+
+      const coincide =
+        originHost === host ||
+        originHostSinPuerto === hostSinPuerto ||
+        (forwardedHost && (originHost === forwardedHost || originHostSinPuerto === forwardedHostSinPuerto));
+
+      if (!coincide) {
         throw new ErrorProhibido("Origen de petición no permitido (fallo CSRF)");
       }
-    } catch {
+    } catch (e) {
+      if (e instanceof ErrorProhibido) throw e;
       throw new ErrorProhibido("Origen inválido en la solicitud");
     }
   }
