@@ -203,6 +203,7 @@ export default function TableroDetallePage({ params }: PageProps) {
             dispatch({ type: "SET_FILTRO_TEXTO", payload: "" });
             dispatch({ type: "SET_FILTRO_ETIQUETA", payload: null });
           }}
+          onNuevaTarea={() => abrirModalCrear(state.tablero?.columnas[0]?.id)}
         />
       </header>
 

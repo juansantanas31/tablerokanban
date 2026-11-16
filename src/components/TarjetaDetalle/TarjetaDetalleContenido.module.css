@@ -4,6 +4,38 @@
   gap: 1.25rem;
   color: var(--text-primary);
   width: 100%;
+  position: relative;
+}
+
+/* Toast Notification */
+.toast {
+  position: sticky;
+  top: 0.5rem;
+  align-self: center;
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .subBar {
@@ -44,18 +76,34 @@
   text-overflow: ellipsis;
 }
 
-.statusPill {
+.subBarRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.statusDropdownContainer {
+  position: relative;
+}
+
+.statusPillBtn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.2rem 0.65rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   background-color: rgba(99, 143, 255, 0.12);
   color: #c7d2fe;
-  border: 1px solid rgba(99, 143, 255, 0.25);
+  border: 1px solid rgba(99, 143, 255, 0.3);
   font-size: 11px;
   font-weight: 600;
-  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.statusPillBtn:hover {
+  background-color: rgba(99, 143, 255, 0.2);
 }
 
 .statusDot {
@@ -63,6 +111,95 @@
   height: 6px;
   border-radius: 9999px;
   background-color: var(--color-primary);
+}
+
+.statusDropdownMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 140px;
+  z-index: 30;
+}
+
+.statusMenuItem {
+  background: transparent;
+  border: none;
+  padding: 0.45rem 0.65rem;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusMenuItem:hover {
+  background-color: var(--bg-surface-container);
+  color: var(--text-primary);
+}
+
+.menuToggleBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menuToggleBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-card);
+}
+
+.actionPopover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 140px;
+  z-index: 30;
+}
+
+.actionMenuItem {
+  background: transparent;
+  border: none;
+  padding: 0.45rem 0.65rem;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actionMenuItem:hover {
+  background-color: var(--bg-surface-container);
+  color: var(--text-primary);
 }
 
 .title {
@@ -135,6 +272,12 @@
   align-items: center;
   gap: 0.35rem;
   font-weight: 600;
+  color: #fca5a5;
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
 }
 
 .priorityDot {
@@ -182,6 +325,73 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
+}
+
+/* Architecture Tile */
+.architectureTile {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.archHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.archTitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.archBadge {
+  font-size: 11px;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.archCanvas {
+  height: 72px;
+  background: linear-gradient(135deg, rgba(30, 33, 43, 0.8), rgba(18, 20, 26, 0.95));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: flex-end;
+  padding: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.archTag {
+  background-color: rgba(13, 14, 18, 0.85);
+  border: 1px solid var(--border-default);
+  backdrop-filter: blur(4px);
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.archTagDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #34d399;
 }
 
 /* Subtasks */
@@ -298,6 +508,52 @@
 .subtaskTextCompleted {
   text-decoration: line-through;
   color: var(--text-muted);
+}
+
+.addSubtaskBtn {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+}
+
+.addSubtaskBtn:hover {
+  text-decoration: underline;
+}
+
+.addSubtaskRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.addSubtaskInput {
+  flex: 1;
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.65rem;
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+}
+
+.saveSubtaskBtn {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0 0.75rem;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Comments */

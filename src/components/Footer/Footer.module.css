@@ -2,9 +2,15 @@
   margin-top: auto;
   background-color: rgba(13, 14, 18, 0.9);
   border-top: 1px solid var(--border-subtle);
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 1rem 5.5rem; /* Espacio extra para bottom nav en móviles */
   font-size: 0.8125rem;
   color: var(--text-muted);
+}
+
+@media (min-width: 768px) {
+  .footer {
+    padding: 1.5rem 1rem;
+  }
 }
 
 .container {
@@ -31,4 +37,53 @@
   list-style: none;
   font-size: 0.75rem;
   font-family: var(--font-mono);
+  padding: 0;
+  margin: 0;
+}
+
+/* Mobile Fixed Bottom Nav Dock (Stitch) */
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  background-color: rgba(13, 14, 18, 0.92);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 56px;
+  padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+  .bottomNav {
+    display: none;
+  }
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 44px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: color 0.15s ease;
+}
+
+.navItem:hover {
+  color: var(--text-secondary);
+}
+
+.navItemActive {
+  color: var(--color-primary);
+  font-weight: 600;
 }

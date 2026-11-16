@@ -22,6 +22,7 @@ interface TarjetaDetalleContenidoProps {
   tarjeta: Tarjeta;
   columnas?: Columna[];
   tableroNombre?: string;
+  onCerrar?: () => void;
 }
 
 export function TarjetaDetalleContenido({
@@ -30,55 +31,107 @@ export function TarjetaDetalleContenido({
   tableroNombre = "Tablero Kanban Minimalista",
 }: TarjetaDetalleContenidoProps) {
   const columna = columnas.find((c) => c.id === tarjeta.columnaId);
-  const estadoTexto = columna ? columna.nombre : "En Progreso";
+  const estadoInicial = columna ? columna.nombre : "En progreso";
 
-  // Subtareas interactivas
+  const [estadoActual, setEstadoActual] = useState(estadoInicial);
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Subtareas interactivas (Stitch LIN-1042)
   const [subtareas, setSubtareas] = useState<Subtarea[]>([
     {
       id: "sub-1",
-      texto: "Definir Custom Resource Definition (CRD) para PrometheusAdapter",
+      texto: "Configurar runners distribuidos en GCP",
       completada: true,
     },
     {
       id: "sub-2",
-      texto: "Ajustar CPU and Memory resource limits en pods de alta concurrencia",
+      texto: "Migrar scripts de Bash a Github Actions reusable workflows",
       completada: true,
     },
     {
       id: "sub-3",
-      texto: "Configurar targetAverageUtilization a 70% en HPA manifest",
+      texto: "Implementar rollback automático con canary testing",
       completada: true,
     },
     {
       id: "sub-4",
-      texto: "Ejecutar pruebas de carga sintética simulando picos de 15k req/s",
+      texto: "Configurar alertas en PagerDuty",
       completada: false,
     },
     {
       id: "sub-5",
-      texto: "Validar métricas de cooldown y escala hacia abajo (scaleDown window)",
+      texto: "Documentar guía de incidentes en Notion",
       completada: false,
     },
   ]);
 
-  // Comentarios iniciales
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [newSubtaskText, setNewSubtaskText] = useState("");
+
+  // Timeline de actividad (Stitch LIN-1042)
   const [comentarios, setComentarios] = useState<Comentario[]>([
     {
       id: "com-1",
-      autor: "David Morales · DevOps",
-      iniciales: "DM",
+      autor: "Mateo Ruiz · SRE",
+      iniciales: "MR",
       tiempo: "hace 2 horas",
       texto:
-        "Los manifests base de KEDA quedaron testeados en el clúster staging. Listos para validar métricas.",
+        "Los runners en la región europe-west3 ya pasaron la prueba de estrés de 40 compilaciones concurrentes sin timeouts.",
+    },
+    {
+      id: "com-2",
+      autor: "Elena Morales · DevOps",
+      iniciales: "EM",
+      tiempo: "hace 45 min",
+      texto:
+        "Excelente. Procedo con la validación de rollback canary antes de conectar las alertas de PagerDuty.",
     },
   ]);
 
   const [nuevoComentario, setNuevoComentario] = useState("");
+  const [isMovedToReview, setIsMovedToReview] = useState(false);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2400);
+  };
+
+  const handleSelectStatus = (nuevoEstado: string) => {
+    setEstadoActual(nuevoEstado);
+    setIsStatusMenuOpen(false);
+    showToast(`Estado cambiado a: ${nuevoEstado}`);
+  };
 
   const toggleSubtarea = (id: string) => {
-    setSubtareas((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, completada: !s.completada } : s))
-    );
+    setSubtareas((prev) => {
+      const next = prev.map((s) => (s.id === id ? { ...s, completada: !s.completada } : s));
+      const allCompleted = next.every((s) => s.completada);
+      if (allCompleted) {
+        showToast("¡Todas las subtareas completadas!");
+      }
+      return next;
+    });
+  };
+
+  const handleAddSubtask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubtaskText.trim()) return;
+
+    setSubtareas((prev) => [
+      ...prev,
+      {
+        id: `sub-${Date.now()}`,
+        texto: newSubtaskText.trim(),
+        completada: false,
+      },
+    ]);
+    setNewSubtaskText("");
+    setIsAddingSubtask(false);
+    showToast("Subtarea añadida");
   };
 
   const agregarComentario = (e: React.FormEvent) => {
@@ -89,25 +142,41 @@ export function TarjetaDetalleContenido({
       ...prev,
       {
         id: `com-${Date.now()}`,
-        autor: "Tú · Desarrollador",
+        autor: "Tú · Dev Lead",
         iniciales: "TÚ",
-        tiempo: "ahora mismo",
+        tiempo: "justo ahora",
         texto: nuevoComentario.trim(),
       },
     ]);
     setNuevoComentario("");
+    showToast("Comentario publicado");
+  };
+
+  const handleMoveToReview = () => {
+    setEstadoActual("En revisión");
+    setIsMovedToReview(true);
+    showToast("Tarea movida a Revisión");
   };
 
   const subtareasCompletadas = subtareas.filter((s) => s.completada).length;
   const porcentaje = subtareas.length > 0 ? Math.round((subtareasCompletadas / subtareas.length) * 100) : 0;
 
-  // Código mono estilo Linear LIN-XXXX
   const codigoLinear = tarjeta.id.toUpperCase().startsWith("LIN-")
     ? tarjeta.id.toUpperCase()
     : `LIN-${tarjeta.id.replace(/\D/g, "") || "1042"}`;
 
   return (
     <div className={styles.container}>
+      {/* Toast Notification Pill */}
+      {toastMessage && (
+        <div className={styles.toast} role="status" aria-live="polite">
+          <span className="material-symbols-outlined" style={{ fontSize: 16, color: "#34d399" }}>
+            check_circle
+          </span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Barra superior / Status */}
       <div className={styles.subBar}>
         <div className={styles.subBarLeft}>
@@ -116,9 +185,113 @@ export function TarjetaDetalleContenido({
             {tableroNombre}
           </span>
         </div>
-        <div className={styles.statusPill}>
-          <span className={styles.statusDot}></span>
-          <span>{estadoTexto}</span>
+
+        <div className={styles.subBarRight}>
+          {/* Status selector pill dropdown */}
+          <div className={styles.statusDropdownContainer}>
+            <button
+              type="button"
+              className={styles.statusPillBtn}
+              onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+              aria-expanded={isStatusMenuOpen}
+              aria-label={`Estado actual: ${estadoActual}. Cambiar estado`}
+            >
+              <span className={styles.statusDot}></span>
+              <span>{estadoActual}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                expand_more
+              </span>
+            </button>
+
+            {isStatusMenuOpen && (
+              <div className={styles.statusDropdownMenu} role="menu">
+                {["Por hacer", "En progreso", "En revisión", "Completado"].map((est) => (
+                  <button
+                    key={est}
+                    type="button"
+                    className={styles.statusMenuItem}
+                    onClick={() => handleSelectStatus(est)}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        backgroundColor:
+                          est === "Completado"
+                            ? "#34d399"
+                            : est === "En revisión"
+                            ? "#38bdf8"
+                            : est === "En progreso"
+                            ? "#638fff"
+                            : "#64748b",
+                      }}
+                    ></span>
+                    {est}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Action dots popover trigger */}
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              className={styles.menuToggleBtn}
+              onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
+              aria-label="Más acciones de la tarea"
+              aria-expanded={isActionMenuOpen}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                more_vert
+              </span>
+            </button>
+
+            {isActionMenuOpen && (
+              <div className={styles.actionPopover} role="menu">
+                <button
+                  type="button"
+                  className={styles.actionMenuItem}
+                  onClick={() => {
+                    setIsActionMenuOpen(false);
+                    showToast("Enlace copiado al portapapeles");
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+                    share
+                  </span>
+                  Compartir
+                </button>
+                <button
+                  type="button"
+                  className={styles.actionMenuItem}
+                  onClick={() => {
+                    setIsActionMenuOpen(false);
+                    showToast("Tarea archivada");
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+                    archive
+                  </span>
+                  Archivar
+                </button>
+                <button
+                  type="button"
+                  className={styles.actionMenuItem}
+                  onClick={() => {
+                    setIsActionMenuOpen(false);
+                    showToast("Vista previa duplicada");
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+                    content_copy
+                  </span>
+                  Duplicar
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -139,11 +312,11 @@ export function TarjetaDetalleContenido({
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
               person
             </span>
-            Asignado
+            Asignado a
           </span>
           <span className={styles.bentoValue}>
-            <span className={styles.avatarMini}>SC</span>
-            <span>Sofía Castro</span>
+            <span className={styles.avatarMini}>EM</span>
+            <span>Elena Morales <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(DevOps)</span></span>
           </span>
         </div>
 
@@ -152,13 +325,15 @@ export function TarjetaDetalleContenido({
         <div className={styles.bentoRow}>
           <span className={styles.bentoLabel}>
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              flag
+              signal_cellular_alt
             </span>
             Prioridad
           </span>
           <span className={styles.bentoValue}>
             <span className={styles.priorityBadge}>
-              <span className={styles.priorityDot}></span>
+              <span className="material-symbols-outlined" style={{ fontSize: 12 }}>
+                arrow_upward
+              </span>
               <span>Alta</span>
             </span>
           </span>
@@ -169,33 +344,33 @@ export function TarjetaDetalleContenido({
         <div className={styles.bentoRow}>
           <span className={styles.bentoLabel}>
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
-              calendar_today
+              cycle
             </span>
-            Fecha Límite
+            Sprint
           </span>
           <span className={styles.bentoValue}>
-            {tarjeta.vence || "2026-11-20"}
+            Sprint 42 <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(Q2 Core)</span>
           </span>
         </div>
 
         <div className={styles.bentoSplit}>
           <div className={styles.bentoMiniCard}>
-            <span className={styles.bentoMiniLabel}>Sprint</span>
+            <span className={styles.bentoMiniLabel}>Estimación</span>
             <span className={styles.bentoMiniValue}>
               <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
-                cycle
+                analytics
               </span>
-              Sprint 24 · Q3
+              5 story points
             </span>
           </div>
 
           <div className={styles.bentoMiniCard}>
-            <span className={styles.bentoMiniLabel}>Estimación</span>
+            <span className={styles.bentoMiniLabel}>Fecha límite</span>
             <span className={styles.bentoMiniValue}>
               <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
-                monitoring
+                calendar_today
               </span>
-              8 Puntos (Fibonacci)
+              {tarjeta.vence || "18 de Octubre"}
             </span>
           </div>
         </div>
@@ -234,7 +409,26 @@ export function TarjetaDetalleContenido({
         )}
       </section>
 
-      {/* Subtareas con Checklist interactivo */}
+      {/* Visual Architecture Context Tile */}
+      <section className={styles.architectureTile} aria-label="Topología de Despliegue">
+        <div className={styles.archHeader}>
+          <span className={styles.archTitle}>Topología de Despliegue</span>
+          <span className={styles.archBadge}>
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+              cloud_sync
+            </span>
+            GCP Multi-Zone
+          </span>
+        </div>
+        <div className={styles.archCanvas}>
+          <div className={styles.archTag}>
+            <span className={styles.archTagDot}></span>
+            <span>3 clústeres sincronizados (us-east / europe-west)</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Subtareas interactuables con checkboxes */}
       <section className={styles.subtasksSection} aria-label="Subtareas de la tarea">
         <div className={styles.subtasksTitleRow}>
           <h3 className={styles.subtasksHeader}>
@@ -244,11 +438,11 @@ export function TarjetaDetalleContenido({
             Subtareas
           </h3>
           <span className={styles.subtaskPill}>
-            {subtareasCompletadas} de {subtareas.length} ({porcentaje}%)
+            {subtareasCompletadas} de {subtareas.length} completadas ({porcentaje}%)
           </span>
         </div>
 
-        {/* Barra de progreso accesible */}
+        {/* Barra de progreso lineal */}
         <div
           className={styles.progressBarContainer}
           role="progressbar"
@@ -257,10 +451,7 @@ export function TarjetaDetalleContenido({
           aria-valuemax={100}
           aria-label={`Progreso de subtareas: ${porcentaje}%`}
         >
-          <div
-            className={styles.progressBarFill}
-            style={{ width: `${porcentaje}%` }}
-          ></div>
+          <div className={styles.progressBarFill} style={{ width: `${porcentaje}%` }}></div>
         </div>
 
         <ul className={styles.subtasksList}>
@@ -284,15 +475,49 @@ export function TarjetaDetalleContenido({
             </li>
           ))}
         </ul>
+
+        {isAddingSubtask ? (
+          <form onSubmit={handleAddSubtask} className={styles.addSubtaskRow}>
+            <input
+              type="text"
+              value={newSubtaskText}
+              onChange={(e) => setNewSubtaskText(e.target.value)}
+              placeholder="Escribe el nombre de la subtarea..."
+              className={styles.addSubtaskInput}
+              autoFocus
+            />
+            <button type="submit" className={styles.saveSubtaskBtn}>
+              Guardar
+            </button>
+            <button
+              type="button"
+              className={styles.addSubtaskBtn}
+              onClick={() => setIsAddingSubtask(false)}
+            >
+              Cancelar
+            </button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            className={styles.addSubtaskBtn}
+            onClick={() => setIsAddingSubtask(true)}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+              add
+            </span>
+            Añadir subtarea
+          </button>
+        )}
       </section>
 
-      {/* Comentarios y Timeline */}
+      {/* Actividad Reciente & Comentarios */}
       <section className={styles.commentsSection} aria-label="Historial y comentarios">
         <h3 className={styles.commentsHeader}>
           <span className="material-symbols-outlined" style={{ fontSize: 17 }}>
             forum
           </span>
-          Actividad y Discusión
+          Actividad y Discusión ({comentarios.length})
         </h3>
 
         <div className={styles.commentsList}>
@@ -315,15 +540,45 @@ export function TarjetaDetalleContenido({
             type="text"
             value={nuevoComentario}
             onChange={(e) => setNuevoComentario(e.target.value)}
-            placeholder="Añadir una actualización o comentario..."
+            placeholder="Escribe una actualización o nota técnica..."
             className={styles.commentInput}
             aria-label="Nuevo comentario"
           />
           <button type="submit" className={styles.commentSubmitBtn}>
-            Enviar
+            Comentar
           </button>
         </form>
       </section>
+
+      {/* Quick Move Action Trigger */}
+      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+        <button
+          type="button"
+          onClick={handleMoveToReview}
+          style={{
+            flex: 1,
+            backgroundColor: isMovedToReview ? "rgba(52, 211, 153, 0.2)" : "var(--color-primary-muted)",
+            color: isMovedToReview ? "#34d399" : "var(--color-primary)",
+            border: `1px solid ${isMovedToReview ? "rgba(52, 211, 153, 0.4)" : "var(--color-primary)"}`,
+            borderRadius: "var(--radius-sm)",
+            padding: "0.6rem 1rem",
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.4rem",
+            minHeight: "42px",
+            transition: "all 0.2s ease",
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+            {isMovedToReview ? "check_circle" : "rate_review"}
+          </span>
+          {isMovedToReview ? "Enviado a Revisión" : "Mover a Revisión"}
+        </button>
+      </div>
     </div>
   );
 }

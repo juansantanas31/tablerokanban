@@ -1,7 +1,7 @@
 {
   "tablero": {
     "id": "tablero-demo-1",
-    "nombre": "Sprint 1 - Tablero de Organización",
+    "nombre": "Sprint 24 · Q3 En curso",
     "columnas": [
       {
         "id": "col-por-hacer",
@@ -10,12 +10,17 @@
       },
       {
         "id": "col-en-curso",
-        "nombre": "En curso",
+        "nombre": "En progreso",
         "limiteWip": 3
       },
       {
+        "id": "col-revision",
+        "nombre": "Revisión",
+        "limiteWip": 5
+      },
+      {
         "id": "col-hecho",
-        "nombre": "Hecho",
+        "nombre": "Completado",
         "limiteWip": 50
       }
     ],
@@ -23,44 +28,74 @@
   },
   "tarjetas": [
     {
-      "id": "tarjeta-1",
-      "titulo": "Configurar repositorio y reglas de IA",
-      "descripcion": "Verificar que Git esté aislado en la raíz y que las reglas de seguridad protejan .env.",
-      "columnaId": "col-por-hacer",
+      "id": "LIN-3042",
+      "titulo": "Refactorizar pipeline de CI/CD",
+      "descripcion": "3 de 5 subtareas resueltas. Optimización de tiempos en builds de contenedores Docker mediante caching distribuido en runner local.",
+      "columnaId": "col-en-curso",
       "posicion": 1000,
-      "etiquetas": ["urgente", "documentacion"],
+      "etiquetas": ["urgente", "desarrollo"],
       "vence": "2026-11-20",
       "creadoEn": "2026-11-15T09:30:00.000Z"
     },
     {
-      "id": "tarjeta-2",
-      "titulo": "Diseñar columna accesible con HTML semántico",
-      "descripcion": "Implementar landmarks semánticos, contraste WCAG AA y soporte completo para teclado.",
-      "columnaId": "col-por-hacer",
+      "id": "LIN-3048",
+      "titulo": "Diseñar arquitectura de diseño de tokens",
+      "descripcion": "Mapeo de variables de color con tokens W3C y especificación para componentes iOS/Android.",
+      "columnaId": "col-en-curso",
       "posicion": 2000,
       "etiquetas": ["diseño", "importante"],
-      "vence": "2026-11-25",
+      "vence": "2026-10-24",
       "creadoEn": "2026-11-15T10:00:00.000Z"
     },
     {
-      "id": "tarjeta-3",
-      "titulo": "Integrar estados de interfaz (carga, vacío, error)",
-      "descripcion": "Gestionar esqueleto animado, mensaje de reintento accesible y anuncios aria-live.",
-      "columnaId": "col-por-hacer",
+      "id": "LIN-3055",
+      "titulo": "Optimizar latencia de caché en Redis",
+      "descripcion": "Mitigar picos de latencia en consultas P99 mediante pipelining y compresión snappy en clúster primario.",
+      "columnaId": "col-en-curso",
       "posicion": 3000,
-      "etiquetas": ["desarrollo", "pruebas"],
-      "vence": "2026-11-28",
+      "etiquetas": ["urgente", "pruebas"],
+      "vence": "2026-11-21",
       "creadoEn": "2026-11-15T10:30:00.000Z"
     },
     {
-      "id": "tarjeta-4",
-      "titulo": "Pruebas unitarias de componentes con Vitest y RTL",
-      "descripcion": "Comprobar renderizado accesible por roles y etiquetas accesibles.",
+      "id": "LIN-1042",
+      "titulo": "Refactorizar clúster Kubernetes para auto-escalado horizontal",
+      "descripcion": "Configurar runners distribuidos en GCP, métricas HPA personalizadas en Prometheus y canary rollback automático.",
       "columnaId": "col-por-hacer",
       "posicion": 4000,
-      "etiquetas": ["pruebas"],
-      "vence": null,
+      "etiquetas": ["desarrollo", "urgente"],
+      "vence": "2026-10-18",
       "creadoEn": "2026-11-15T11:00:00.000Z"
+    },
+    {
+      "id": "LIN-1050",
+      "titulo": "Auditar accesibilidad WCAG 2.2 AA en componentes de arrastre",
+      "descripcion": "Asegurar foco visible, landmarks semánticos y alternativa completa de teclado con selectores 'Mover a...'.",
+      "columnaId": "col-por-hacer",
+      "posicion": 5000,
+      "etiquetas": ["pruebas", "documentacion"],
+      "vence": "2026-11-25",
+      "creadoEn": "2026-11-15T11:30:00.000Z"
+    },
+    {
+      "id": "LIN-2010",
+      "titulo": "Revisión de seguridad de API y headers CSP",
+      "descripcion": "Validar endpoints con Zod y asegurar que Firestore solo responda desde el servidor con Firebase Admin.",
+      "columnaId": "col-revision",
+      "posicion": 6000,
+      "etiquetas": ["importante", "documentacion"],
+      "vence": "2026-11-22",
+      "creadoEn": "2026-11-15T12:00:00.000Z"
+    },
+    {
+      "id": "LIN-4001",
+      "titulo": "Configuración inicial de Vite, Next.js 16 y React 19",
+      "descripcion": "Scaffolding de proyecto, configuración de TypeScript estricto y suites de pruebas automatizadas.",
+      "columnaId": "col-hecho",
+      "posicion": 7000,
+      "etiquetas": ["desarrollo"],
+      "vence": "2026-11-15",
+      "creadoEn": "2026-11-15T08:00:00.000Z"
     }
   ]
 }

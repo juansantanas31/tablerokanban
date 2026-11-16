@@ -8,6 +8,7 @@ interface FiltrosBarProps {
   filtroEtiqueta: string | null;
   onCambiarEtiqueta: (etiqueta: string | null) => void;
   onLimpiar: () => void;
+  onNuevaTarea?: () => void;
 }
 
 const ETIQUETAS = [
@@ -25,6 +26,7 @@ export function FiltrosBar({
   filtroEtiqueta,
   onCambiarEtiqueta,
   onLimpiar,
+  onNuevaTarea,
 }: FiltrosBarProps) {
   const hayFiltrosActivos = filtroTexto.trim() !== "" || filtroEtiqueta !== null;
 
@@ -80,6 +82,17 @@ export function FiltrosBar({
         <div className={styles.chipsGroup}>
           <button
             type="button"
+            className={`${styles.chip} ${filtroEtiqueta === "importante" ? styles.chipActive : ""}`}
+            onClick={() => onCambiarEtiqueta(filtroEtiqueta === "importante" ? null : "importante")}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 13 }}>
+              check
+            </span>
+            <span>Mis tareas</span>
+          </button>
+
+          <button
+            type="button"
             className={`${styles.chip} ${filtroEtiqueta === "urgente" ? styles.chipActive : ""}`}
             onClick={() => onCambiarEtiqueta(filtroEtiqueta === "urgente" ? null : "urgente")}
           >
@@ -100,7 +113,7 @@ export function FiltrosBar({
             className={`${styles.chip} ${filtroEtiqueta === "desarrollo" ? styles.chipActive : ""}`}
             onClick={() => onCambiarEtiqueta(filtroEtiqueta === "desarrollo" ? null : "desarrollo")}
           >
-            <span>Desarrollo</span>
+            <span>Sprint actual</span>
           </button>
 
           {hayFiltrosActivos && (
@@ -111,6 +124,27 @@ export function FiltrosBar({
               aria-label="Limpiar todos los filtros"
             >
               Limpiar
+            </button>
+          )}
+
+          {onNuevaTarea && (
+            <button
+              type="button"
+              className={styles.chip}
+              style={{
+                backgroundColor: "var(--bg-surface-container)",
+                color: "var(--text-primary)",
+                fontWeight: 600,
+                border: "1px solid var(--border-default)",
+                marginLeft: "auto",
+              }}
+              onClick={onNuevaTarea}
+              aria-label="Crear nueva tarea"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 15 }}>
+                add
+              </span>
+              <span>Tarea</span>
             </button>
           )}
         </div>
