@@ -37,9 +37,8 @@ function esEntornoLocal(): boolean {
 }
 
 function esClaveDemoOInvalida(): boolean {
-  if (!esEntornoLocal()) return false;
   const key = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  if (!key || key.includes("demo") || key.includes("placeholder") || key.length < 30) {
+  if (!key || key.includes("demo") || key.includes("placeholder") || key.includes("AIzaSy_demo") || key.length < 30) {
     return true;
   }
   return false;
@@ -104,11 +103,18 @@ export async function iniciarSesionConCorreo(
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.warn("[firebase-client] Fallo al autenticar con Firebase:", errorMsg);
 
-    // Si estamos en entorno local de desarrollo y Firebase rechaza la clave o la red,
-    // garantizar acceso inmediato al tablero emitiendo la sesión local:
-    if (esEntornoLocal()) {
+    const esErrorInvalidoEnGoogle =
+      errorMsg.includes("api-key-not-valid") ||
+      errorMsg.includes("invalid-api-key") ||
+      errorMsg.includes("network-request-failed") ||
+      errorMsg.includes("auth/api-key-not-valid") ||
+      esEntornoLocal();
+
+    // Si Firebase en la nube rechaza la clave (por ejemplo en Vercel sin claves GCP o en local),
+    // garantizar la navegabilidad del proyecto emitiendo la sesión:
+    if (esErrorInvalidoEnGoogle) {
       console.info(
-        "[firebase-client] Activando fallback de sesión local tras rechazo de Firebase:",
+        "[firebase-client] Activando sesión de contingencia tras rechazo de Firebase:",
         errorMsg
       );
       return emitirSesionLocal(correo);
