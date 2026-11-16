@@ -251,7 +251,7 @@ export default function TablerosPage() {
               type="text"
               value={nuevoNombre}
               onChange={(e) => setNuevoNombre(e.target.value)}
-              placeholder="Ej: Sprint 24 · Q3 En curso"
+              placeholder="Ej: Sprint 1 - Organización"
               maxLength={100}
               required
               disabled={creando}

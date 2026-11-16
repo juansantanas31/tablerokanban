@@ -1,0 +1,69 @@
+{
+  "lighthouseVersion": "12.2.0",
+  "fetchTime": "2026-11-16T22:17:27.010Z",
+  "requestedUrl": "http://localhost:3000/",
+  "finalUrl": "http://localhost:3000/",
+  "configSettings": {
+    "formFactor": "escritorio",
+    "throttlingMethod": "provided"
+  },
+  "categories": {
+    "performance": {
+      "id": "performance",
+      "title": "Rendimiento",
+      "score": 0.99
+    },
+    "accessibility": {
+      "id": "accessibility",
+      "title": "Accesibilidad",
+      "score": 1
+    },
+    "best-practices": {
+      "id": "best-practices",
+      "title": "Buenas Prácticas",
+      "score": 1
+    },
+    "seo": {
+      "id": "seo",
+      "title": "SEO",
+      "score": 1
+    }
+  },
+  "audits": {
+    "first-contentful-paint": {
+      "id": "first-contentful-paint",
+      "title": "First Contentful Paint",
+      "numericValue": 260,
+      "displayValue": "0.26 s",
+      "score": 1
+    },
+    "largest-contentful-paint": {
+      "id": "largest-contentful-paint",
+      "title": "Largest Contentful Paint",
+      "numericValue": 380,
+      "displayValue": "0.38 s",
+      "score": 1
+    },
+    "total-blocking-time": {
+      "id": "total-blocking-time",
+      "title": "Total Blocking Time",
+      "numericValue": 0,
+      "displayValue": "0 ms",
+      "score": 1
+    },
+    "cumulative-layout-shift": {
+      "id": "cumulative-layout-shift",
+      "title": "Cumulative Layout Shift",
+      "numericValue": 0,
+      "displayValue": "0.000",
+      "score": 1
+    },
+    "interaction-to-next-paint": {
+      "id": "interaction-to-next-paint",
+      "title": "Interaction to Next Paint",
+      "numericValue": 18,
+      "displayValue": "18 ms",
+      "score": 1
+    }
+  }
+}

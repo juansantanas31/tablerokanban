@@ -37,7 +37,8 @@ export type IconName =
   | "format_list_bulleted"
   | "history"
   | "settings"
-  | "error";
+  | "error"
+  | "logout";
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   name: IconName | string;
@@ -176,6 +177,10 @@ export function Icon({ name, size = 18, className, style, ...props }: IconProps)
       case "error":
         return (
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+        );
+      case "logout":
+        return (
+          <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
         );
       default:
         return null;

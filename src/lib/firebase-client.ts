@@ -64,6 +64,17 @@ export async function iniciarSesionConCorreo(
       console.warn(
         "[firebase-client] Modo simulación de desarrollo local activo (sin claves reales)."
       );
+      const simToken = `demo-token-${btoa(encodeURIComponent(correo))}`;
+      const res = await fetch("/api/auth/sesion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: simToken }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Fallo al emitir la sesión simulada (HTTP ${res.status})`);
+      }
+
       return { exito: true, correo };
     }
 

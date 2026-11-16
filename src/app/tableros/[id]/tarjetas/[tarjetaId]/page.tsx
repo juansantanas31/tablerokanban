@@ -1,38 +1,95 @@
+"use client";
+
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { TarjetaDetalleContenido } from "@/components/TarjetaDetalle/TarjetaDetalleContenido";
-import type { Tarjeta, Columna } from "@/schemas/tarjeta.schema";
+import type { Tarjeta, Tablero } from "@/schemas/tarjeta.schema";
 import { Icon } from "@/components/Icon/Icon";
+import { apiCliente, ApiError } from "@/lib/api-cliente";
 import styles from "./tarjeta-detalle.module.css";
 
 interface PageProps {
   params: Promise<{ id: string; tarjetaId: string }>;
 }
 
-export default async function TarjetaDetallePage({ params }: PageProps) {
-  const { id: tableroId, tarjetaId } = await params;
+/**
+ * Página individual de detalle de tarjeta (Ruta directa /tableros/:id/tarjetas/:tarjetaId).
+ * Carga exclusivamente datos reales desde el backend (GET /api/tableros/:id).
+ * Sin datos mock ni extras no especificados.
+ */
+export default function TarjetaDetallePage({ params }: PageProps) {
+  const router = useRouter();
+  const { id: tableroId, tarjetaId } = use(params);
 
-  // Tarjeta mock con datos enriquecidos de Stitch LIN-1042 o con el ID de la URL
-  const tarjetaMock: Tarjeta = {
-    id: tarjetaId,
-    titulo:
-      tarjetaId === "LIN-1042" || tarjetaId.includes("1042")
-        ? "Refactorizar arquitectura de clúster Kubernetes para auto-escalado horizontal"
-        : `Refactorizar pipeline y optimización (${tarjetaId})`,
-    descripcion:
-      "Implementar réplicas multi-región y configurar HPA basado en métricas de Prometheus. Reducir latencia de respuesta en endpoints críticos un 40% durante cargas pico.",
-    columnaId: "col-en-curso",
-    posicion: 1000,
-    etiquetas: ["Infra", "Kubernetes", "Alta Prioridad"],
-    vence: "2026-11-20",
-    creadoEn: "2026-11-15T10:00:00.000Z",
-  };
+  const [tablero, setTablero] = useState<Tablero | null>(null);
+  const [tarjeta, setTarjeta] = useState<Tarjeta | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const columnasMock: Columna[] = [
-    { id: "col-por-hacer", nombre: "Por hacer", limiteWip: 10 },
-    { id: "col-en-curso", nombre: "En progreso", limiteWip: 3 },
-    { id: "col-revision", nombre: "Revisión", limiteWip: 5 },
-    { id: "col-hecho", nombre: "Completado", limiteWip: 50 },
-  ];
+  useEffect(() => {
+    let cancelado = false;
+
+    apiCliente
+      .get<{ tablero: Tablero; tarjetas: Tarjeta[] }>(`/api/tableros/${tableroId}`)
+      .then((data) => {
+        if (cancelado) return;
+        setTablero(data.tablero);
+        const encontrada = data.tarjetas.find((t) => t.id === tarjetaId);
+        if (encontrada) {
+          setTarjeta(encontrada);
+        } else {
+          setError(`No se encontró ninguna tarjeta con el identificador "${tarjetaId}".`);
+        }
+      })
+      .catch((err: unknown) => {
+        if (cancelado) return;
+        if (err instanceof ApiError && err.status === 401) {
+          router.push("/login");
+          return;
+        }
+        const msg = err instanceof ApiError ? err.message : "Error al cargar la tarjeta";
+        setError(msg);
+      })
+      .finally(() => {
+        if (!cancelado) setCargando(false);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [tableroId, tarjetaId, router]);
+
+  if (cargando) {
+    return (
+      <div className={styles.container}>
+        <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>
+          Cargando detalle de la tarjeta...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !tarjeta || !tablero) {
+    return (
+      <div className={styles.container}>
+        <div style={{ padding: "2rem", textAlign: "center" }}>
+          <h1 style={{ fontSize: "1.25rem", color: "var(--color-error)", marginBottom: "0.5rem" }}>
+            Tarjeta no encontrada
+          </h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+            {error || "La tarjeta solicitada no existe o no tienes permisos para verla."}
+          </p>
+          <Link href={`/tableros/${tableroId}`} className={styles.backLink} style={{ display: "inline-flex" }}>
+            <Icon name="arrow_back" size={16} />
+            <span>Volver al tablero</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const columnaActual = tablero.columnas.find((c) => c.id === tarjeta.columnaId);
 
   return (
     <div className={styles.container}>
@@ -51,29 +108,25 @@ export default async function TarjetaDetallePage({ params }: PageProps) {
               borderRadius: "50%",
               backgroundColor: "var(--color-primary)",
             }}
-          ></span>
-          <span>En progreso</span>
+          />
+          <span>{columnaActual?.nombre || tarjeta.columnaId}</span>
         </div>
       </header>
 
       <section className={styles.contentCard} aria-labelledby="detalle-tarjeta-titulo">
         <TarjetaDetalleContenido
-          tarjeta={tarjetaMock}
-          columnas={columnasMock}
-          tableroNombre={`Sprint 24 · Tablero ${tableroId}`}
+          tarjeta={tarjeta}
+          columnas={tablero.columnas}
+          tableroNombre={tablero.nombre}
         />
       </section>
 
-      {/* Dock de acciones fijo al fondo estilo Stitch */}
-      <footer className={styles.bottomActionDock} aria-label="Acciones de la tarjeta">
+      {/* Dock de navegación fijo al fondo */}
+      <footer className={styles.bottomActionDock} aria-label="Navegación de la tarjeta">
         <div className={styles.dockContainer}>
           <Link href={`/tableros/${tableroId}`} className={styles.secondaryAction}>
             <Icon name="close" size={16} />
-            <span>Cerrar</span>
-          </Link>
-          <Link href={`/tableros/${tableroId}`} className={styles.primaryAction}>
-            <Icon name="check_circle" size={16} />
-            <span>Mover a Revisión</span>
+            <span>Volver al tablero</span>
           </Link>
         </div>
       </footer>

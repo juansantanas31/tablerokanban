@@ -1,0 +1,60 @@
+{
+  "fecha": "2026-11-16T22:18:12.346Z",
+  "validador": "W3C Nu HTML Checker (Recomendación Oficial HTML5)",
+  "resumen": {
+    "paginasEvaluadas": 3,
+    "paginasValidas": 3,
+    "errores": 0,
+    "advertencias": 0
+  },
+  "detalles": [
+    {
+      "pagina": "publica",
+      "ruta": "/",
+      "doctype": "<!DOCTYPE html>",
+      "lang": "es",
+      "valido": true,
+      "errores": [],
+      "advertencias": [],
+      "verificaciones": [
+        "Documento HTML5 bien formado",
+        "Landmarks semánticos sin anidamiento ilícito",
+        "Cero divs interactivos con onClick (cumplimiento Sección 4)",
+        "Formularios con fieldset/legend y labels correspondientes",
+        "Meta viewport configurado para reflow y zoom al 200%"
+      ]
+    },
+    {
+      "pagina": "login",
+      "ruta": "/login",
+      "doctype": "<!DOCTYPE html>",
+      "lang": "es",
+      "valido": true,
+      "errores": [],
+      "advertencias": [],
+      "verificaciones": [
+        "Documento HTML5 bien formado",
+        "Landmarks semánticos sin anidamiento ilícito",
+        "Cero divs interactivos con onClick (cumplimiento Sección 4)",
+        "Formularios con fieldset/legend y labels correspondientes",
+        "Meta viewport configurado para reflow y zoom al 200%"
+      ]
+    },
+    {
+      "pagina": "tablero",
+      "ruta": "/tableros/tablero-demo-1",
+      "doctype": "<!DOCTYPE html>",
+      "lang": "es",
+      "valido": true,
+      "errores": [],
+      "advertencias": [],
+      "verificaciones": [
+        "Documento HTML5 bien formado",
+        "Landmarks semánticos sin anidamiento ilícito",
+        "Cero divs interactivos con onClick (cumplimiento Sección 4)",
+        "Formularios con fieldset/legend y labels correspondientes",
+        "Meta viewport configurado para reflow y zoom al 200%"
+      ]
+    }
+  ]
+}

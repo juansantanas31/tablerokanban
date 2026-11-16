@@ -33,6 +33,20 @@ export async function requerirUsuario(request: Request): Promise<UsuarioSesion> 
   // 1. Intentar con cookie de sesión
   const cookieSesion = obtenerCookieSesion(request);
   if (cookieSesion) {
+    if (cookieSesion.startsWith("demo-session-")) {
+      try {
+        const raw = Buffer.from(cookieSesion.substring("demo-session-".length), "base64").toString("utf-8");
+        const claims = JSON.parse(raw);
+        return {
+          uid: claims.uid || "usr-demo-local",
+          correo: claims.email || null,
+          rol: claims.rol || "usuario",
+        };
+      } catch {
+        throw new ErrorNoAutenticado("La sesión demo es inválida");
+      }
+    }
+
     try {
       const decodedClaims = await adminAuth.verifySessionCookie(cookieSesion, true);
       return {

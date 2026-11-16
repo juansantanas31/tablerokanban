@@ -21,7 +21,6 @@ export function Tarjeta({
   onMoverTeclado,
   onVerDetalle,
 }: TarjetaProps) {
-  const etiqueta = tarjeta.etiquetas[0] || "general";
   const otrasColumnas = columnasDisponibles.filter((c) => c.id !== tarjeta.columnaId);
   const selectId = useId();
 
@@ -36,27 +35,18 @@ export function Tarjeta({
     e.currentTarget.classList.remove(styles.cardDragging);
   };
 
-  // Código mono estilo Linear LIN-XXXX
-  const codigoLinear = tarjeta.id.toUpperCase().startsWith("LIN-")
+  // Código identificador mono
+  const codigo = tarjeta.id.toUpperCase().startsWith("LIN-")
     ? tarjeta.id.toUpperCase()
-    : `LIN-${tarjeta.id.replace(/\D/g, "") || "1"}`;
+    : tarjeta.id;
 
-  // Prioridad con clase y texto
+  // Prioridad derivada de etiquetas reales
   const esUrgente = tarjeta.etiquetas.includes("urgente");
   const esImportante = tarjeta.etiquetas.includes("importante");
-  const textoPrioridad = esUrgente ? "Alta" : esImportante ? "Media" : "Normal";
-  const iconoPrioridad = esUrgente ? "keyboard_double_arrow_up" : esImportante ? "drag_handle" : "check";
-  const clasePrioridad = esUrgente
-    ? styles.priorityHigh
-    : esImportante
-    ? styles.priorityMedium
-    : styles.priorityNormal;
-
-  // Mock asignado
-  const asignado = {
-    nombre: esUrgente ? "Alejandro V." : esImportante ? "Elena M." : "Carlos R.",
-    iniciales: esUrgente ? "AV" : esImportante ? "EM" : "CR",
-  };
+  const tienePrioridad = esUrgente || esImportante;
+  const textoPrioridad = esUrgente ? "Alta" : "Media";
+  const iconoPrioridad = esUrgente ? "keyboard_double_arrow_up" : "drag_handle";
+  const clasePrioridad = esUrgente ? styles.priorityHigh : styles.priorityMedium;
 
   return (
     <li className={styles.cardItem}>
@@ -67,33 +57,24 @@ export function Tarjeta({
         onDragEnd={handleDragEnd}
         tabIndex={0}
         aria-labelledby={`tarjeta-titulo-${tarjeta.id}`}
-        aria-describedby={`tarjeta-desc-${tarjeta.id}`}
-        onClick={() => onVerDetalle?.(tarjeta.id)}
+        aria-describedby={tarjeta.descripcion ? `tarjeta-desc-${tarjeta.id}` : undefined}
       >
         {/* Top Meta Row */}
         <div className={styles.topMeta}>
           <div className={styles.idAndTag}>
-            <span className={styles.cardCode}>{codigoLinear}</span>
-            <span className={styles.tagBadge}>{etiqueta}</span>
+            <span className={styles.cardCode}>{codigo}</span>
+            {tarjeta.etiquetas.length > 0 && (
+              <span className={styles.tagBadge}>{tarjeta.etiquetas[0]}</span>
+            )}
           </div>
 
           <div className={styles.topRightActions}>
-            <span className={`${styles.priorityBadge} ${clasePrioridad}`}>
-              <Icon name={iconoPrioridad} size={12} />
-              <span>{textoPrioridad}</span>
-            </span>
-
-            <button
-              type="button"
-              className={styles.cardOptionsBtn}
-              onClick={(e) => {
-                e.stopPropagation();
-                onVerDetalle?.(tarjeta.id);
-              }}
-              aria-label={`Opciones de tarjeta: ${tarjeta.titulo}`}
-            >
-              <Icon name="more_vert" size={16} />
-            </button>
+            {tienePrioridad && (
+              <span className={`${styles.priorityBadge} ${clasePrioridad}`}>
+                <Icon name={iconoPrioridad} size={12} />
+                <span>{textoPrioridad}</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -109,35 +90,20 @@ export function Tarjeta({
           </p>
         )}
 
-        {/* Subtasks progress bar */}
-        <div className={styles.subtasksRow}>
-          <div className={styles.subtasksHeader}>
-            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <Icon name="checklist" size={13} style={{ color: "var(--text-muted)" }} />
-              <span>Subtareas</span>
-            </span>
-            <span style={{ fontFamily: "var(--font-mono)" }}>3 / 5</span>
-          </div>
-          <div className={styles.subtasksTrack}>
-            <div className={styles.subtasksBar} style={{ width: "60%" }} />
-          </div>
-        </div>
-
-        {/* Card Footer (Stitch Screen 1) */}
+        {/* Card Footer: Etiquetas reales y fecha de vencimiento real */}
         <div className={styles.footer}>
-          <div className={styles.assignee}>
-            <div className={styles.avatarCircle} aria-hidden="true">
-              {asignado.iniciales}
-            </div>
-            <span className={styles.assigneeName}>{asignado.nombre}</span>
+          <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
+            {tarjeta.etiquetas.slice(1).map((tag) => (
+              <span key={tag} className={styles.tagBadge}>
+                {tag}
+              </span>
+            ))}
           </div>
 
           {tarjeta.vence ? (
             <span className={`${styles.dueInfo} ${esUrgente ? styles.dueInfoUrgent : ""}`}>
               <Icon name="schedule" size={13} />
-              <time dateTime={tarjeta.vence}>
-                {tarjeta.vence === "2026-11-20" ? "Hoy" : tarjeta.vence}
-              </time>
+              <time dateTime={tarjeta.vence}>{tarjeta.vence}</time>
             </span>
           ) : (
             <span className={styles.dueInfo}>

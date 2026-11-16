@@ -1,5 +1,3 @@
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import { manejar } from "@/lib/http";
 import { requerirUsuario, comprobarOrigen } from "@/lib/auth";

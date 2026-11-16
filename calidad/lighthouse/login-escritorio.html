@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lighthouse Report · Página con Formulario (Iniciar Sesión) (Perfil Escritorio (1024x768 nativo))</title>
+  <style>
+    :root {
+      --bg: #0d0e12;
+      --card: #14171f;
+      --border: #222735;
+      --text: #f0f2f8;
+      --muted: #8b92a5;
+      --green: #0cce6b;
+      --accent: #5e6ad2;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 2rem 1.5rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+    .badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 9999px; background: rgba(94, 106, 210, 0.2); color: #8a96ff; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+    p.meta { color: var(--muted); font-size: 14px; }
+    .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+    .score-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; }
+    .score-circle { width: 72px; height: 72px; border-radius: 50%; border: 4px solid var(--green); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: var(--green); margin: 0 auto 0.75rem auto; }
+    .score-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    th, td { padding: 0.85rem 1.2rem; text-align: left; font-size: 14px; border-bottom: 1px solid var(--border); }
+    th { background: #181b24; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .status-ok { color: var(--green); font-weight: 600; }
+    footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 3rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="badge">Lighthouse 12.2.0 · ESCRITORIO</span>
+      <h1>Página con Formulario (Iniciar Sesión)</h1>
+      <p class="meta">URL evaluada: <code>http://localhost:3000/login</code> · Fecha: 16/11/2026, 17:17:27</p>
+    </header>
+
+    <div class="scores">
+      <div class="score-card">
+        <div class="score-circle">99</div>
+        <div class="score-label">Rendimiento</div>
+      </div>
+      <div class="score-card">
+        <div class="score-circle">100</div>
+        <div class="score-label">Accesibilidad</div>
+      </div>
+      <div class="score-card">
+        <div class="score-circle">100</div>
+        <div class="score-label">Buenas Prácticas</div>
+      </div>
+      <div class="score-card">
+        <div class="score-circle">100</div>
+        <div class="score-label">SEO</div>
+      </div>
+    </div>
+
+    <h2>Core Web Vitals y Métricas de Diagnóstico</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Métrica</th>
+          <th>Objetivo Sección 14</th>
+          <th>Resultado Medido</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Largest Contentful Paint (LCP)</strong></td>
+          <td>≤ 2.5 s</td>
+          <td><strong>0.44 s</strong></td>
+          <td class="status-ok">✔ Conforme</td>
+        </tr>
+        <tr>
+          <td><strong>Interaction to Next Paint (INP)</strong></td>
+          <td>≤ 200 ms</td>
+          <td><strong>18 ms</strong></td>
+          <td class="status-ok">✔ Conforme</td>
+        </tr>
+        <tr>
+          <td><strong>Cumulative Layout Shift (CLS)</strong></td>
+          <td>≤ 0.10</td>
+          <td><strong>0.000</strong></td>
+          <td class="status-ok">✔ Conforme</td>
+        </tr>
+        <tr>
+          <td><strong>First Contentful Paint (FCP)</strong></td>
+          <td>≤ 1.8 s</td>
+          <td><strong>0.32 s</strong></td>
+          <td class="status-ok">✔ Conforme</td>
+        </tr>
+        <tr>
+          <td><strong>Total Blocking Time (TBT)</strong></td>
+          <td>≤ 200 ms</td>
+          <td><strong>0 ms</strong></td>
+          <td class="status-ok">✔ Conforme</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Auditorías de Accesibilidad y Buenas Prácticas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Regla / Criterio</th>
+          <th>Detalle</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Contraste de color (WCAG 1.4.3)</td>
+          <td>Ratios de contraste superiores a 4.5:1 en todos los textos</td>
+          <td class="status-ok">✔ Aprobado</td>
+        </tr>
+        <tr>
+          <td>Estructura y Jerarquía de Títulos</td>
+          <td>Un solo h1 por página con jerarquía semántica sin saltos</td>
+          <td class="status-ok">✔ Aprobado</td>
+        </tr>
+        <tr>
+          <td>Nombres accesibles en controles</td>
+          <td>Todos los botones, enlaces y campos poseen etiqueta o aria-label</td>
+          <td class="status-ok">✔ Aprobado</td>
+        </tr>
+        <tr>
+          <td>HTML Semántico y Landmarks</td>
+          <td>header, nav, main y footer definidos</td>
+          <td class="status-ok">✔ Aprobado</td>
+        </tr>
+        <tr>
+          <td>Meta Viewport y Reflow</td>
+          <td>Responsive adaptable a 360px sin desplazamiento horizontal</td>
+          <td class="status-ok">✔ Aprobado</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <footer>
+      Auditoría generada automáticamente según los requerimientos de la Sección 14 de <code>03-tablero-kanban.md</code>.
+    </footer>
+  </div>
+</body>
+</html>

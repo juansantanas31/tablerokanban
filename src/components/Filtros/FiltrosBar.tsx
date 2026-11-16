@@ -33,19 +33,6 @@ export function FiltrosBar({
 
   return (
     <section role="search" className={styles.container} aria-label="Búsqueda y filtros de tarjetas">
-      {/* Top Sprint Health / Velocity Indicator Bar (Stitch Screen 1) */}
-      <div className={styles.sprintBar}>
-        <div className={styles.sprintLeft}>
-          <span className={styles.sprintDot} aria-hidden="true" />
-          <span className={styles.sprintName}>Sprint 24 · Q3 En curso</span>
-        </div>
-        <div className={styles.sprintRight}>
-          <span>Ritmo: 17 pts</span>
-          <span aria-hidden="true">•</span>
-          <span style={{ color: "var(--color-primary)", fontWeight: 600 }}>68% completado</span>
-        </div>
-      </div>
-
       {/* Filter & Action Row */}
       <div className={styles.filterRow}>
         <div className={styles.searchGroup}>

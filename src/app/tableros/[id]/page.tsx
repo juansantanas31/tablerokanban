@@ -453,7 +453,7 @@ export default function TableroDetallePage({ params }: PageProps) {
           <TarjetaDetalleContenido
             tarjeta={tarjetaDetalleFallback}
             columnas={state.tablero?.columnas}
-            tableroNombre={state.tablero?.nombre || "Sprint 24"}
+            tableroNombre={state.tablero?.nombre || "Tablero"}
           />
         </ModalDialog>
       )}

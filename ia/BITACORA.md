@@ -230,3 +230,31 @@ Esta bitácora documenta de manera transparente y auditable cada intervención d
   - Desacoplar el estado visual optimista de la persistencia base y respaldar la reversión sin recargas manuales.
 
 
+### Sesión 09: Resolución de Redirección proxy.ts, Cierre de Sesión en Header, Purga de Datos Falsos y Técnicas Sección 6
+- **Fecha:** 2026-11-16
+- **Propósito:**
+  1. Resolver el bucle infinito de redirección `/login` provocado por `proxy.ts` cuando se corre en modo simulación local sin claves GCP reales.
+  2. Implementar botón de cierre de sesión («Cerrar Sesión») en el `Header` conectado a `DELETE /api/auth/sesion` y `signOut(auth)`.
+  3. Purgar datos hardcodeados y elementos mockeados no previstos en el alcance de `03-tablero-kanban.md` (subtareas ficticias 3/5, comentarios falsos, barra de sprint ficticia).
+  4. Completar las tres técnicas requeridas de la Sección 6: `useReducer`, `useOptimistic` y modal con URL por ruta interceptada/paralela (`@modal/(.)tarjetas/[tarjetaId]`).
+  5. Crear el almacén en memoria para desarrollo local (`src/repositories/memoria-demo.store.ts`) permitiendo navegación completa e interactiva en desarrollo sin configurar credenciales externas.
+  6. Añadir pruebas de integración para el endpoint `POST /api/tableros/:id/tarjetas` con payloads mínimos sin posición ni fecha de vencimiento (`bruno/08-tarjeta-crear-exito.bru`).
+  7. Mantener el código verificado localmente con Git sin realizar push remoto según la directriz explícita del usuario.
+- **Interacción / Prompt:**
+  - *"Conectar la UI a la API...", "Técnicas de la sección 6...", "El detalle de tarjeta es falso...", "Bug en POST .../tarjetas...", "Login simulado + proxy.ts..."*
+- **Evidencia Generada:**
+  - `src/lib/firebase-client.ts`, `src/app/api/auth/sesion/route.ts`, `src/lib/auth.ts`: Emisión de cookie de sesión `sesion=demo-session-*` para que `proxy.ts` permita navegación protegida en desarrollo local.
+  - `src/components/Header/Header.tsx`: Componente cliente interactivo con detección de sesión activa (`GET /api/auth/yo`) y botón accesible con icono de logout para cerrar sesión (`DELETE /api/auth/sesion`).
+  - `src/components/TarjetaDetalle/TarjetaDetalleContenido.tsx`, `src/components/Tarjeta/Tarjeta.tsx`, `src/components/Filtros/FiltrosBar.tsx`: Eliminados todos los mocks hardcodeados (3/5 subtareas, Sprint ficticio 68%, comentarios mock).
+  - `src/app/tableros/[id]/layout.tsx`, `src/app/tableros/[id]/@modal/(.)tarjetas/[tarjetaId]/page.tsx`: Modal con URL interceptada nativo de Next.js 16.
+  - `src/repositories/memoria-demo.store.ts`: Almacén local seguro en `globalThis` que preserva el estado en vivo de tableros y tarjetas durante el desarrollo sin credenciales GCP.
+  - `tests/api/tarjetas-crear.test.ts`: Pruebas de creación con validación de contrato OpenAPI 201.
+  - `npm run check`: 11 suites de prueba, 31/31 pruebas unitarias aprobadas.
+- **Validación Humana:**
+  - `npm run check`: 0 errores ESLint, 0 errores TypeScript, 31 pruebas aprobadas en Vitest.
+  - `node ia/verificar-seguridad-ia.mjs`: Conforme.
+- **Decisión Técnica:**
+  - Preservar la estricta frontera cliente/servidor, cumplir al 100% las restricciones de seguridad y mantener los cambios en commits locales sin ejecutar push remoto.
+
+
+
