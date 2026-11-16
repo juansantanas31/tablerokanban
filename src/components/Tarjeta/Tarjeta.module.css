@@ -5,7 +5,7 @@
 .card {
   background-color: var(--bg-surface-card);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: 1rem;
   box-shadow: var(--shadow-sm);
   display: flex;
@@ -43,7 +43,8 @@
 .idAndTag {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
 .cardCode {
@@ -52,6 +53,7 @@
   font-weight: 600;
   color: var(--text-muted);
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .tagBadge {
@@ -64,6 +66,13 @@
   background-color: var(--bg-surface-container);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+.topRightActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .priorityBadge {
@@ -74,6 +83,7 @@
   font-weight: 600;
   padding: 0.15rem 0.45rem;
   border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 .priorityHigh {
@@ -94,12 +104,31 @@
   border: 1px solid var(--border-subtle);
 }
 
+.cardOptionsBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.15rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.cardOptionsBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-container);
+}
+
 /* Title */
 .title {
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.4;
+  margin: 0;
   transition: color 0.15s ease;
 }
 
@@ -111,6 +140,7 @@
   font-size: 0.8125rem;
   color: var(--text-muted);
   line-height: 1.45;
+  margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -122,7 +152,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  margin-top: 0.25rem;
+  margin-top: 0.15rem;
 }
 
 .subtasksHeader {
@@ -148,7 +178,7 @@
   transition: width 0.3s ease;
 }
 
-/* Card Footer */
+/* Card Footer (Stitch Screen 1) */
 .footer {
   display: flex;
   align-items: center;
@@ -156,12 +186,14 @@
   padding-top: 0.6rem;
   border-top: 1px solid var(--border-subtle);
   font-size: 11px;
+  gap: 0.5rem;
 }
 
 .assignee {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  min-width: 0;
 }
 
 .avatarCircle {
@@ -177,50 +209,73 @@
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .assigneeName {
   color: var(--text-secondary);
   font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dueInfo {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.25rem;
   color: var(--text-muted);
+  font-size: 11px;
+  flex-shrink: 0;
 }
 
-.actionsRight {
+.dueInfoUrgent {
+  color: var(--color-danger);
+}
+
+/* Accesibility Keyboard Move Strip */
+.keyboardMoveRow {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--border-subtle);
 }
 
 .moveSelect {
+  flex: 1;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   border-radius: var(--radius-sm);
-  padding: 0.15rem 0.4rem;
-  font-size: 10px;
+  padding: 0.2rem 0.5rem;
+  font-size: 11px;
   font-family: var(--font-mono);
   min-height: 28px;
   cursor: pointer;
 }
 
+.moveSelect:focus-visible {
+  border-color: var(--color-primary);
+}
+
 .detailButton {
-  background: transparent;
+  background: var(--bg-surface-container);
   border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  padding: 0.2rem 0.5rem;
+  color: var(--text-primary);
+  padding: 0.2rem 0.6rem;
   border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .detailButton:hover {
-  background-color: var(--bg-surface-container);
-  color: var(--text-primary);
+  background-color: var(--bg-surface-card-hover);
+  border-color: var(--border-default);
 }

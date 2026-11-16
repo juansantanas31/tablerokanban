@@ -41,36 +41,38 @@ export function FiltrosBar({
         <div className={styles.sprintRight}>
           <span>Ritmo: 17 pts</span>
           <span aria-hidden="true">•</span>
-          <span style={{ color: "var(--color-primary)" }}>68% completado</span>
+          <span style={{ color: "var(--color-primary)", fontWeight: 600 }}>68% completado</span>
         </div>
       </div>
 
       {/* Filter & Action Row */}
       <div className={styles.filterRow}>
         <div className={styles.searchGroup}>
-          <label htmlFor="buscar-tarjetas" className="sr-only">
-            Buscar por título o descripción
-          </label>
-          <input
-            id="buscar-tarjetas"
-            type="search"
-            className={styles.searchInput}
-            placeholder="Buscar tarea o código..."
-            value={filtroTexto}
-            onChange={(e) => onCambiarTexto(e.target.value)}
-          />
+          <div className={styles.searchInputWrapper}>
+            <span className={`material-symbols-outlined ${styles.searchIcon}`}>search</span>
+            <label htmlFor="buscar-tarjetas" className="sr-only">
+              Buscar por título o descripción
+            </label>
+            <input
+              id="buscar-tarjetas"
+              type="search"
+              className={styles.searchInput}
+              placeholder="Buscar tarea o código..."
+              value={filtroTexto}
+              onChange={(e) => onCambiarTexto(e.target.value)}
+            />
+          </div>
 
           <label htmlFor="filtrar-etiqueta" className="sr-only">
             Filtrar por etiqueta
           </label>
           <select
             id="filtrar-etiqueta"
-            className={styles.searchInput}
-            style={{ maxWidth: "180px" }}
+            className={styles.tagSelect}
             value={filtroEtiqueta || ""}
             onChange={(e) => onCambiarEtiqueta(e.target.value || null)}
           >
-            <option value="">Todas las etiquetas</option>
+            <option value="">Todas</option>
             {ETIQUETAS.map((tag) => (
               <option key={tag} value={tag} style={{ textTransform: "capitalize" }}>
                 {tag}
@@ -130,14 +132,7 @@ export function FiltrosBar({
           {onNuevaTarea && (
             <button
               type="button"
-              className={styles.chip}
-              style={{
-                backgroundColor: "var(--bg-surface-container)",
-                color: "var(--text-primary)",
-                fontWeight: 600,
-                border: "1px solid var(--border-default)",
-                marginLeft: "auto",
-              }}
+              className={styles.newCardBtn}
               onClick={onNuevaTarea}
               aria-label="Crear nueva tarea"
             >

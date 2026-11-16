@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Tarjeta as TarjetaTipo, Columna as ColumnaTipo } from "@/schemas/tarjeta.schema";
+import { useId } from "react";
+import type { Tarjeta as TarjetaType, Columna } from "@/schemas/tarjeta.schema";
 import styles from "./Tarjeta.module.css";
 
 interface TarjetaProps {
-  tarjeta: TarjetaTipo;
-  columnasDisponibles?: ColumnaTipo[];
+  tarjeta: TarjetaType;
+  columnasDisponibles?: Columna[];
   onMoverTeclado?: (tarjetaId: string, columnaDestinoId: string) => void;
-  onVerDetalle?: (id: string) => void;
-  onDragStart?: (e: React.DragEvent<HTMLElement>, tarjetaId: string) => void;
-  onDragEnd?: (e: React.DragEvent<HTMLElement>) => void;
+  onVerDetalle?: (tarjetaId: string) => void;
 }
 
 export function Tarjeta({
@@ -18,83 +16,83 @@ export function Tarjeta({
   columnasDisponibles = [],
   onMoverTeclado,
   onVerDetalle,
-  onDragStart,
-  onDragEnd,
 }: TarjetaProps) {
-  const [isDragging, setIsDragging] = useState(false);
+  const etiqueta = tarjeta.etiquetas[0] || "general";
+  const otrasColumnas = columnasDisponibles.filter((c) => c.id !== tarjeta.columnaId);
+  const selectId = useId();
 
+  // Drag and Drop nativo HTML5 (RF-02)
   const handleDragStart = (e: React.DragEvent<HTMLElement>) => {
-    setIsDragging(true);
     e.dataTransfer.setData("text/plain", tarjeta.id);
     e.dataTransfer.effectAllowed = "move";
-    onDragStart?.(e, tarjeta.id);
+    e.currentTarget.classList.add(styles.cardDragging);
   };
 
   const handleDragEnd = (e: React.DragEvent<HTMLElement>) => {
-    setIsDragging(false);
-    onDragEnd?.(e);
+    e.currentTarget.classList.remove(styles.cardDragging);
   };
 
-  const otrasColumnas = columnasDisponibles.filter((c) => c.id !== tarjeta.columnaId);
+  // Código mono estilo Linear LIN-XXXX
+  const codigoLinear = tarjeta.id.toUpperCase().startsWith("LIN-")
+    ? tarjeta.id.toUpperCase()
+    : `LIN-${tarjeta.id.replace(/\D/g, "") || "1042"}`;
 
-  // Generar código estilo Linear tipo LIN-XXXX
-  const codigoLinear = tarjeta.id.startsWith("tarjeta-")
-    ? `LIN-${tarjeta.id.replace("tarjeta-", "").slice(-4)}`
-    : `LIN-1042`;
-
+  // Prioridad con clase y texto
   const esUrgente = tarjeta.etiquetas.includes("urgente");
   const esImportante = tarjeta.etiquetas.includes("importante");
+  const textoPrioridad = esUrgente ? "Alta" : esImportante ? "Media" : "Normal";
+  const clasePrioridad = esUrgente
+    ? styles.priorityHigh
+    : esImportante
+    ? styles.priorityMedium
+    : styles.priorityNormal;
 
-  // Asignado simulado
+  // Mock asignado
   const asignado = {
-    nombre: "Elena M.",
-    iniciales: "EM",
+    nombre: esUrgente ? "Alejandro V." : esImportante ? "Elena M." : "Carlos R.",
+    iniciales: esUrgente ? "AV" : esImportante ? "EM" : "CR",
   };
 
   return (
     <li className={styles.cardItem}>
       <article
-        className={`${styles.card} ${isDragging ? styles.cardDragging : ""}`}
-        aria-labelledby={`tarjeta-titulo-${tarjeta.id}`}
-        draggable={true}
+        className={styles.card}
+        draggable
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         tabIndex={0}
+        aria-labelledby={`tarjeta-titulo-${tarjeta.id}`}
+        aria-describedby={`tarjeta-desc-${tarjeta.id}`}
+        onClick={() => onVerDetalle?.(tarjeta.id)}
       >
         {/* Top Meta Row */}
         <div className={styles.topMeta}>
           <div className={styles.idAndTag}>
             <span className={styles.cardCode}>{codigoLinear}</span>
-            {tarjeta.etiquetas.length > 0 && (
-              <span className={styles.tagBadge}>
-                {tarjeta.etiquetas[0]}
-              </span>
-            )}
+            <span className={styles.tagBadge}>{etiqueta}</span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            {esUrgente ? (
-              <span className={`${styles.priorityBadge} ${styles.priorityHigh}`}>
-                <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
-                  keyboard_double_arrow_up
-                </span>
-                Alta
+          <div className={styles.topRightActions}>
+            <span className={`${styles.priorityBadge} ${clasePrioridad}`}>
+              <span className="material-symbols-outlined" style={{ fontSize: "12px" }}>
+                {esUrgente ? "keyboard_double_arrow_up" : esImportante ? "drag_handle" : "check"}
               </span>
-            ) : esImportante ? (
-              <span className={`${styles.priorityBadge} ${styles.priorityMedium}`}>
-                <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
-                  drag_handle
-                </span>
-                Media
+              {textoPrioridad}
+            </span>
+
+            <button
+              type="button"
+              className={styles.cardOptionsBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                onVerDetalle?.(tarjeta.id);
+              }}
+              aria-label={`Opciones de tarjeta: ${tarjeta.titulo}`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                more_vert
               </span>
-            ) : (
-              <span className={`${styles.priorityBadge} ${styles.priorityNormal}`}>
-                <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
-                  remove
-                </span>
-                Normal
-              </span>
-            )}
+            </button>
           </div>
         </div>
 
@@ -105,14 +103,16 @@ export function Tarjeta({
 
         {/* Description snippet */}
         {tarjeta.descripcion && (
-          <p className={styles.description}>{tarjeta.descripcion}</p>
+          <p id={`tarjeta-desc-${tarjeta.id}`} className={styles.description}>
+            {tarjeta.descripcion}
+          </p>
         )}
 
         {/* Subtasks progress bar */}
         <div className={styles.subtasksRow}>
           <div className={styles.subtasksHeader}>
             <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
                 checklist
               </span>
               Subtareas
@@ -124,7 +124,7 @@ export function Tarjeta({
           </div>
         </div>
 
-        {/* Card Footer */}
+        {/* Card Footer (Stitch Screen 1) */}
         <div className={styles.footer}>
           <div className={styles.assignee}>
             <div className={styles.avatarCircle} aria-hidden="true">
@@ -133,50 +133,65 @@ export function Tarjeta({
             <span className={styles.assigneeName}>{asignado.nombre}</span>
           </div>
 
-          <div className={styles.actionsRight}>
-            {tarjeta.vence ? (
-              <span className={styles.dueInfo}>
-                <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
-                  schedule
-                </span>
-                <time dateTime={tarjeta.vence}>{tarjeta.vence}</time>
+          {tarjeta.vence ? (
+            <span className={`${styles.dueInfo} ${esUrgente ? styles.dueInfoUrgent : ""}`}>
+              <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
+                schedule
               </span>
-            ) : null}
+              <time dateTime={tarjeta.vence}>
+                {tarjeta.vence === "2026-11-20" ? "Hoy" : tarjeta.vence}
+              </time>
+            </span>
+          ) : (
+            <span className={styles.dueInfo}>
+              <span className="material-symbols-outlined" style={{ fontSize: "13px" }}>
+                event
+              </span>
+              <span>Sin fecha</span>
+            </span>
+          )}
+        </div>
 
-            {/* Alternativa por teclado para mover (RF-03) */}
-            {otrasColumnas.length > 0 && onMoverTeclado && (
-              <select
-                id={`mover-select-${tarjeta.id}`}
-                className={styles.moveSelect}
-                defaultValue=""
-                onChange={(e) => {
-                  if (e.target.value) {
-                    onMoverTeclado(tarjeta.id, e.target.value);
-                    e.target.value = "";
-                  }
-                }}
-                aria-label={`Mover tarjeta "${tarjeta.titulo}" a otra columna`}
-              >
-                <option value="" disabled>
-                  Mover a...
-                </option>
-                {otrasColumnas.map((col) => (
-                  <option key={col.id} value={col.id}>
-                    {col.nombre}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            <button
-              type="button"
-              className={styles.detailButton}
-              onClick={() => onVerDetalle?.(tarjeta.id)}
-              aria-label={`Ver detalles de tarjeta: ${tarjeta.titulo}`}
+        {/* Alternativa accesible por teclado para mover (RF-03 & Criterio de Aceptación 1) */}
+        <div
+          className={styles.keyboardMoveRow}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {otrasColumnas.length > 0 && onMoverTeclado && (
+            <select
+              id={`mover-select-${tarjeta.id || selectId}`}
+              className={styles.moveSelect}
+              defaultValue=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  onMoverTeclado(tarjeta.id, e.target.value);
+                  e.target.value = "";
+                }
+              }}
+              aria-label={`Mover tarjeta "${tarjeta.titulo}" a otra columna`}
             >
-              Detalles
-            </button>
-          </div>
+              <option value="" disabled>
+                Mover a...
+              </option>
+              {otrasColumnas.map((col) => (
+                <option key={col.id} value={col.id}>
+                  {col.nombre}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            type="button"
+            className={styles.detailButton}
+            onClick={() => onVerDetalle?.(tarjeta.id)}
+            aria-label={`Ver detalles de tarjeta: ${tarjeta.titulo}`}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
+              open_in_new
+            </span>
+            Detalle
+          </button>
         </div>
       </article>
     </li>

@@ -2,19 +2,16 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: 0.85rem 1.25rem;
-  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.25rem;
+  width: 100%;
 }
 
+/* Top Sprint Health / Velocity Indicator Bar */
 .sprintBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 0.6rem;
+  padding: 0.5rem 0.25rem 0.75rem;
   border-bottom: 1px solid var(--border-subtle);
   font-size: 11px;
 }
@@ -33,10 +30,11 @@
 }
 
 .sprintName {
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
+  font-size: 11px;
 }
 
 .sprintRight {
@@ -44,13 +42,14 @@
   align-items: center;
   gap: 0.6rem;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-size: 11px;
 }
 
+/* Filter & Action Row */
 .filterRow {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 @media (min-width: 768px) {
@@ -58,6 +57,7 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
   }
 }
 
@@ -66,28 +66,59 @@
   align-items: center;
   gap: 0.5rem;
   flex: 1;
+  max-width: 480px;
+}
+
+.searchInputWrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.65rem;
+  color: var(--text-muted);
+  font-size: 16px;
+  pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  max-width: 320px;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.8125rem;
-  background-color: var(--bg-app);
+  padding: 0.45rem 0.75rem 0.45rem 2.1rem;
+  font-size: 12px;
+  background-color: var(--bg-surface);
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
-  min-height: 38px;
+  min-height: 36px;
+  outline: none;
+  transition: border-color 0.15s ease;
 }
 
 .searchInput:focus {
-  border-color: var(--border-focus);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-muted);
+}
+
+.tagSelect {
+  padding: 0.45rem 0.65rem;
+  font-size: 12px;
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  min-height: 36px;
+  outline: none;
+  max-width: 140px;
+  cursor: pointer;
 }
 
 .chipsGroup {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
 }
 
@@ -95,16 +126,16 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.3rem 0.7rem;
+  padding: 0.35rem 0.65rem;
   border-radius: var(--radius-sm);
   background-color: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
-  min-height: 36px;
+  min-height: 34px;
 }
 
 .chip:hover {
@@ -116,6 +147,29 @@
   background-color: var(--bg-surface-container);
   color: var(--text-primary);
   border-color: var(--border-default);
+  font-weight: 600;
+}
+
+.newCardBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface-container-high);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 34px;
+  transition: background-color 0.15s ease;
+  margin-left: auto;
+}
+
+.newCardBtn:hover {
+  background-color: var(--bg-surface-container);
+  border-color: rgba(99, 143, 255, 0.4);
 }
 
 .clearButton {
@@ -125,7 +179,7 @@
   font-size: 11px;
   cursor: pointer;
   text-decoration: underline;
-  padding: 0.3rem;
+  padding: 0.3rem 0.5rem;
 }
 
 .clearButton:hover {

@@ -36,6 +36,7 @@ export default function TableroDetallePage({ params }: PageProps) {
   const [isModalCrearOpen, setIsModalCrearOpen] = useState(false);
   const [columnaSeleccionadaId, setColumnaSeleccionadaId] = useState<string>("");
   const [tarjetaDetalle, setTarjetaDetalle] = useState<Tarjeta | null>(null);
+  const [columnaTabSeleccionada, setColumnaTabSeleccionada] = useState<string | null>(null);
 
   // Cargar datos del tablero
   useEffect(() => {
@@ -162,31 +163,55 @@ export default function TableroDetallePage({ params }: PageProps) {
     );
   }
 
+  const columnaActivaId = columnaTabSeleccionada || state.tablero.columnas[0]?.id || "";
+
   return (
     <div className={styles.container}>
       <AriaLiveAnnouncer mensaje={state.anuncioAccesible} />
 
       <header className={styles.headerSection}>
         <div className={styles.titleRow}>
-          <div>
-            <Link href="/tableros" className={styles.backLink}>
-              ← Volver a Mis Tableros
+          <div className={styles.titleLeft}>
+            <Link href="/tableros" className={styles.backLink} aria-label="Volver a lista de tableros">
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_back</span>
+              <span>Tableros</span>
             </Link>
-            <h1 className={styles.boardTitle} style={{ marginTop: "0.5rem" }}>
+            <h1 className={styles.boardTitle}>
               {state.tablero.nombre}
             </h1>
           </div>
 
-          <div className={styles.headerActions}>
-            <button
-              type="button"
-              className={styles.newCardButton}
-              onClick={() => abrirModalCrear()}
-              aria-haspopup="dialog"
-            >
-              + Nueva Tarjeta
-            </button>
-          </div>
+          <button
+            type="button"
+            className={styles.backLink}
+            onClick={() => abrirModalCrear()}
+            aria-haspopup="dialog"
+            style={{ fontWeight: 600, color: "var(--color-primary)" }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
+            <span>Nueva Tarjeta</span>
+          </button>
+        </div>
+
+        {/* Column Segmented Carousel / Horizontal Stepper (Stitch Screen 1) */}
+        <div className={styles.columnStepper} role="tablist" aria-label="Pestañas de columnas">
+          {state.tablero.columnas.map((col) => {
+            const count = state.tarjetas.filter((t) => t.columnaId === col.id).length;
+            const esActiva = (columnaActivaId || state.tablero?.columnas[0]?.id) === col.id;
+            return (
+              <button
+                key={col.id}
+                role="tab"
+                aria-selected={esActiva}
+                type="button"
+                className={`${styles.columnTab} ${esActiva ? styles.columnTabActive : ""}`}
+                onClick={() => setColumnaTabSeleccionada(col.id)}
+              >
+                <span>{col.nombre}</span>
+                <span className={styles.tabBadge}>{count}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Barra de Búsqueda y Filtros (RF-05) */}
