@@ -13,6 +13,7 @@ interface ColumnaProps {
   tarjetas: TarjetaTipo[];
   estado: EstadoColumna;
   columnasDisponibles?: ColumnaTipo[];
+  tableroId?: string;
   mensajeError?: string;
   onReintentar?: () => void;
   onVerDetalle?: (id: string) => void;
@@ -26,6 +27,7 @@ export function Columna({
   tarjetas,
   estado,
   columnasDisponibles = [],
+  tableroId,
   mensajeError = "No se pudieron cargar las tareas.",
   onReintentar,
   onVerDetalle,
@@ -148,6 +150,7 @@ export function Columna({
               key={tarjeta.id}
               tarjeta={tarjeta}
               columnasDisponibles={columnasDisponibles}
+              tableroId={tableroId}
               onMoverTeclado={onMoverTeclado}
               onVerDetalle={onVerDetalle}
             />

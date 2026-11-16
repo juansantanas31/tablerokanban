@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import Link from "next/link";
 import type { Tarjeta as TarjetaType, Columna } from "@/schemas/tarjeta.schema";
 import { Icon } from "@/components/Icon/Icon";
 import styles from "./Tarjeta.module.css";
@@ -8,6 +9,7 @@ import styles from "./Tarjeta.module.css";
 interface TarjetaProps {
   tarjeta: TarjetaType;
   columnasDisponibles?: Columna[];
+  tableroId?: string;
   onMoverTeclado?: (tarjetaId: string, columnaDestinoId: string) => void;
   onVerDetalle?: (tarjetaId: string) => void;
 }
@@ -15,6 +17,7 @@ interface TarjetaProps {
 export function Tarjeta({
   tarjeta,
   columnasDisponibles = [],
+  tableroId,
   onMoverTeclado,
   onVerDetalle,
 }: TarjetaProps) {
@@ -173,15 +176,26 @@ export function Tarjeta({
             </select>
           )}
 
-          <button
-            type="button"
-            className={styles.detailButton}
-            onClick={() => onVerDetalle?.(tarjeta.id)}
-            aria-label={`Ver detalles de tarjeta: ${tarjeta.titulo}`}
-          >
-            <Icon name="open_in_new" size={13} />
-            <span>Detalle</span>
-          </button>
+          {tableroId ? (
+            <Link
+              href={`/tableros/${tableroId}/tarjetas/${tarjeta.id}`}
+              className={styles.detailButton}
+              aria-label={`Ver detalles de tarjeta: ${tarjeta.titulo}`}
+            >
+              <Icon name="open_in_new" size={13} />
+              <span>Detalle</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className={styles.detailButton}
+              onClick={() => onVerDetalle?.(tarjeta.id)}
+              aria-label={`Ver detalles de tarjeta: ${tarjeta.titulo}`}
+            >
+              <Icon name="open_in_new" size={13} />
+              <span>Detalle</span>
+            </button>
+          )}
         </div>
       </article>
     </li>

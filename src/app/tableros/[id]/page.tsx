@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState, useMemo, useOptimistic, useTransition, useCallback } from "react";
+import { use, useEffect, useState, useMemo, useOptimistic, useTransition, useCallback, useReducer } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Columna } from "@/components/Columna/Columna";
@@ -12,7 +12,11 @@ import { Icon } from "@/components/Icon/Icon";
 import { AriaLiveAnnouncer } from "@/components/AriaLive/AriaLiveAnnouncer";
 import { Tarjeta, Tablero } from "@/schemas/tarjeta.schema";
 import { apiCliente, ApiError } from "@/lib/api-cliente";
-import { calcularPosicionDecimal } from "@/reducers/tablero.reducer";
+import {
+  tableroReducer,
+  estadoInicialTablero,
+  calcularPosicionDecimal,
+} from "@/reducers/tablero.reducer";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import styles from "./tablero-detalle.module.css";
 
@@ -31,8 +35,9 @@ export default function TableroDetallePage({ params }: PageProps) {
   const resolvedParams = use(params);
   const tableroId = resolvedParams.id;
 
-  const [tablero, setTablero] = useState<Tablero | null>(null);
-  const [tarjetasBase, setTarjetasBase] = useState<Tarjeta[]>([]);
+  // Técnica 1 (Sección 6): useReducer para el estado centralizado del tablero
+  const [state, dispatch] = useReducer(tableroReducer, estadoInicialTablero);
+
   const [estadoCarga, setEstadoCarga] = useState<"cargando" | "error" | "exito">("cargando");
   const [mensajeErrorCarga, setMensajeErrorCarga] = useState<string | null>(null);
   const [avisoError, setAvisoError] = useState<string | null>(null);
@@ -46,9 +51,9 @@ export default function TableroDetallePage({ params }: PageProps) {
     null
   );
 
-  // useOptimistic para mover tarjetas al instante (Sección 6 y Criterios 1 y 2)
+  // Técnica 2 (Sección 6): useOptimistic para mover tarjetas al instante con reversión automática
   const [tarjetasOptimistas, setTarjetasOptimistas] = useOptimistic(
-    tarjetasBase,
+    state.tarjetas,
     (estadoActual: Tarjeta[], movimiento: MovimientoOptimista) => {
       return estadoActual.map((t) =>
         t.id === movimiento.tarjetaId
@@ -66,7 +71,7 @@ export default function TableroDetallePage({ params }: PageProps) {
 
   const [isModalCrearOpen, setIsModalCrearOpen] = useState(false);
   const [columnaSeleccionadaId, setColumnaSeleccionadaId] = useState<string>("");
-  const [tarjetaDetalle, setTarjetaDetalle] = useState<Tarjeta | null>(null);
+  const [tarjetaDetalleFallback, setTarjetaDetalleFallback] = useState<Tarjeta | null>(null);
   const [columnaTabSeleccionada, setColumnaTabSeleccionada] = useState<string | null>(null);
 
   // Cargar datos reales desde GET /api/tableros/:id
@@ -79,10 +84,14 @@ export default function TableroDetallePage({ params }: PageProps) {
       const data = await apiCliente.get<{ tablero: Tablero; tarjetas: Tarjeta[] }>(
         `/api/tableros/${tableroId}`
       );
-      setTablero(data.tablero);
-      setTarjetasBase(data.tarjetas || []);
+      if (data.tablero) {
+        dispatch({
+          type: "CARGAR_TABLERO",
+          payload: { tablero: data.tablero, tarjetas: data.tarjetas || [] },
+        });
+      }
       setEstadoCarga("exito");
-      setAnuncioAccesible(`Tablero "${data.tablero.nombre}" cargado exitosamente.`);
+      setAnuncioAccesible(`Tablero "${data.tablero?.nombre}" cargado exitosamente.`);
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 401) {
         setAnuncioAccesible("Sesión expirada. Redirigiendo a inicio de sesión...");
@@ -104,11 +113,15 @@ export default function TableroDetallePage({ params }: PageProps) {
       .get<{ tablero: Tablero; tarjetas: Tarjeta[] }>(`/api/tableros/${tableroId}`)
       .then((data) => {
         if (cancelado) return;
-        setTablero(data.tablero);
-        setTarjetasBase(data.tarjetas || []);
+        if (data.tablero) {
+          dispatch({
+            type: "CARGAR_TABLERO",
+            payload: { tablero: data.tablero, tarjetas: data.tarjetas || [] },
+          });
+        }
         setEstadoCarga("exito");
         setUltimoTableroId(tableroId);
-        setAnuncioAccesible(`Tablero "${data.tablero.nombre}" cargado exitosamente.`);
+        setAnuncioAccesible(`Tablero "${data.tablero?.nombre}" cargado exitosamente.`);
       })
       .catch((err: unknown) => {
         if (cancelado) return;
@@ -153,7 +166,7 @@ export default function TableroDetallePage({ params }: PageProps) {
     if (!tarjeta) return;
     if (tarjeta.columnaId === columnaDestinoId) return;
 
-    const columnaDestino = tablero?.columnas.find((c) => c.id === columnaDestinoId);
+    const columnaDestino = state.tablero?.columnas.find((c) => c.id === columnaDestinoId);
     const tarjetasEnColumnaDestino = tarjetasOptimistas.filter(
       (t) => t.columnaId === columnaDestinoId && t.id !== tarjetaId
     );
@@ -172,15 +185,21 @@ export default function TableroDetallePage({ params }: PageProps) {
       );
 
       try {
-        const res = await apiCliente.patch<{ tarjeta: Tarjeta }>(
+        await apiCliente.patch<{ tarjeta: Tarjeta }>(
           `/api/tableros/${tableroId}/tarjetas/${tarjetaId}/mover`,
           { columnaId: columnaDestinoId, posicion: nuevaPosicion }
         );
 
-        // Si el servidor confirma el movimiento, actualizamos el estado base
-        setTarjetasBase((prev) =>
-          prev.map((t) => (t.id === tarjetaId ? res.tarjeta : t))
-        );
+        // Si el servidor confirma el movimiento, actualizamos el estado con useReducer
+        dispatch({
+          type: "MOVER_TARJETA",
+          payload: {
+            tarjetaId,
+            columnaDestinoId,
+            nuevaPosicion,
+            nombreColumnaDestino: columnaDestino?.nombre,
+          },
+        });
       } catch (err: unknown) {
         if (err instanceof ApiError && err.status === 401) {
           router.push("/login");
@@ -196,15 +215,15 @@ export default function TableroDetallePage({ params }: PageProps) {
           `No se pudo mover la tarjeta: ${mensaje}. La tarjeta regresó a su columna original.`
         );
 
-        // Al no modificar tarjetasBase, useOptimistic revierte automáticamente
+        // Al no modificar state.tarjetas con dispatch, useOptimistic revierte automáticamente
       }
     });
   };
 
   // Crear tarjeta con POST /api/tableros/:id/tarjetas
   const handleCrearTarjeta = async (nuevaTarjeta: Tarjeta) => {
-    const columnaDestino = tablero?.columnas.find((c) => c.id === nuevaTarjeta.columnaId);
-    const tarjetasEnColumna = tarjetasBase.filter(
+    const columnaDestino = state.tablero?.columnas.find((c) => c.id === nuevaTarjeta.columnaId);
+    const tarjetasEnColumna = state.tarjetas.filter(
       (t) => t.columnaId === nuevaTarjeta.columnaId
     );
     const posicionCalculada = calcularPosicionDecimal(
@@ -225,7 +244,7 @@ export default function TableroDetallePage({ params }: PageProps) {
         }
       );
 
-      setTarjetasBase((prev) => [...prev, res.tarjeta]);
+      dispatch({ type: "CREAR_TARJETA", payload: res.tarjeta });
       setAnuncioAccesible(
         `Tarjeta "${res.tarjeta.titulo}" creada en columna "${columnaDestino?.nombre || ""}".`
       );
@@ -243,7 +262,7 @@ export default function TableroDetallePage({ params }: PageProps) {
   };
 
   const abrirModalCrear = (columnaId?: string) => {
-    setColumnaSeleccionadaId(columnaId || tablero?.columnas[0]?.id || "");
+    setColumnaSeleccionadaId(columnaId || state.tablero?.columnas[0]?.id || "");
     setIsModalCrearOpen(true);
   };
 
@@ -256,7 +275,7 @@ export default function TableroDetallePage({ params }: PageProps) {
     );
   }
 
-  if (estadoCarga === "error" || !tablero) {
+  if (estadoCarga === "error" || !state.tablero) {
     return (
       <div className={styles.container}>
         <AriaLiveAnnouncer mensaje={`Error: ${mensajeErrorCarga}`} />
@@ -302,7 +321,7 @@ export default function TableroDetallePage({ params }: PageProps) {
     );
   }
 
-  const columnaActivaId = columnaTabSeleccionada || tablero.columnas[0]?.id || "";
+  const columnaActivaId = columnaTabSeleccionada || state.tablero.columnas[0]?.id || "";
 
   return (
     <div className={styles.container}>
@@ -333,7 +352,7 @@ export default function TableroDetallePage({ params }: PageProps) {
               <Icon name="arrow_back" size={15} />
               <span>Tableros</span>
             </Link>
-            <h1 className={styles.boardTitle}>{tablero.nombre}</h1>
+            <h1 className={styles.boardTitle}>{state.tablero.nombre}</h1>
           </div>
 
           <button
@@ -350,9 +369,9 @@ export default function TableroDetallePage({ params }: PageProps) {
 
         {/* Carrusel/stepper de columnas para pantallas estrechas y móviles */}
         <div className={styles.columnStepper} role="tablist" aria-label="Pestañas de columnas">
-          {tablero.columnas.map((col) => {
+          {state.tablero.columnas.map((col) => {
             const count = tarjetasOptimistas.filter((t) => t.columnaId === col.id).length;
-            const esActiva = (columnaActivaId || tablero?.columnas[0]?.id) === col.id;
+            const esActiva = (columnaActivaId || state.tablero?.columnas[0]?.id) === col.id;
             return (
               <button
                 key={col.id}
@@ -379,13 +398,13 @@ export default function TableroDetallePage({ params }: PageProps) {
             setFiltroTexto("");
             setFiltroEtiqueta(null);
           }}
-          onNuevaTarea={() => abrirModalCrear(tablero.columnas[0]?.id)}
+          onNuevaTarea={() => abrirModalCrear(state.tablero?.columnas[0]?.id)}
         />
       </header>
 
       {/* Región de Columnas del Tablero Kanban (sin <main> anidado) */}
       <section className={styles.columnsWrapper} aria-label="Columnas del tablero">
-        {tablero.columnas.map((col) => {
+        {state.tablero.columnas.map((col) => {
           const tarjetasColumna = tarjetasFiltradas
             .filter((t) => t.columnaId === col.id)
             .sort((a, b) => a.posicion - b.posicion);
@@ -396,13 +415,14 @@ export default function TableroDetallePage({ params }: PageProps) {
               columna={col}
               tarjetas={tarjetasColumna}
               estado={tarjetasColumna.length > 0 ? "exito" : "vacio"}
-              columnasDisponibles={tablero?.columnas}
+              columnasDisponibles={state.tablero?.columnas}
+              tableroId={tableroId}
               onMoverTeclado={moverTarjetaAColumna}
               onDropTarjeta={moverTarjetaAColumna}
               onAgregarTarjeta={abrirModalCrear}
               onVerDetalle={(id) => {
                 const tarjeta = tarjetasOptimistas.find((t) => t.id === id);
-                if (tarjeta) setTarjetaDetalle(tarjeta);
+                if (tarjeta) setTarjetaDetalleFallback(tarjeta);
               }}
             />
           );
@@ -416,24 +436,24 @@ export default function TableroDetallePage({ params }: PageProps) {
         titulo="Nueva Tarjeta"
       >
         <CrearTarjetaForm
-          columnas={tablero.columnas}
+          columnas={state.tablero.columnas}
           columnaInicialId={columnaSeleccionadaId}
           onCrear={handleCrearTarjeta}
           onCancelar={() => setIsModalCrearOpen(false)}
         />
       </ModalDialog>
 
-      {/* Modal accesible para Detalle de Tarjeta (<dialog>) */}
-      {tarjetaDetalle && (
+      {/* Modal de respaldo cuando no se usa navegación por ruta */}
+      {tarjetaDetalleFallback && (
         <ModalDialog
-          isOpen={!!tarjetaDetalle}
-          onClose={() => setTarjetaDetalle(null)}
+          isOpen={!!tarjetaDetalleFallback}
+          onClose={() => setTarjetaDetalleFallback(null)}
           titulo="Detalle de Tarea"
         >
           <TarjetaDetalleContenido
-            tarjeta={tarjetaDetalle}
-            columnas={tablero?.columnas}
-            tableroNombre={tablero?.nombre || "Sprint 24"}
+            tarjeta={tarjetaDetalleFallback}
+            columnas={state.tablero?.columnas}
+            tableroNombre={state.tablero?.nombre || "Sprint 24"}
           />
         </ModalDialog>
       )}
