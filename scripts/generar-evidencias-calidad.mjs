@@ -140,7 +140,7 @@ async function main() {
     const paginas = [
       {
         id: "publica",
-        nombre: "Página Pública (Demostración de Hito 1)",
+        nombre: "Página Pública (Demostración DW)",
         url: `${BASE_URL}/`,
       },
       {

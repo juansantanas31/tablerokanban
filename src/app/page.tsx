@@ -96,7 +96,7 @@ export default function HomePage() {
       <AriaLiveAnnouncer mensaje={anuncioAccesible} />
 
       <section className={styles.introSection}>
-        <h1 className={styles.heading1}>Tablero Kanban — Hito 1</h1>
+        <h1 className={styles.heading1}>Tablero Kanban — DW</h1>
         <p className={styles.description}>
           Columna accesible con tarjetas fijas basada en HTML semántico, diseño mobile-first y
           gestión integral de estados de carga, vacío y error.
@@ -106,7 +106,7 @@ export default function HomePage() {
       {/* Controles para evaluación y sustentación en vivo */}
       <fieldset className={styles.controlsPanel}>
         <legend className={styles.controlsLegend}>
-          Demostración en vivo de Estados de Interfaz (Hito 1 / Sección 4):
+          Demostración en vivo de Estados de Interfaz:
         </legend>
         <div className={styles.buttonGroup}>
           <button

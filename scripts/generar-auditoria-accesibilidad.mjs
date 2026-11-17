@@ -6,10 +6,10 @@ const CALIDAD_DIR = path.resolve("calidad");
 const paginas = [
   {
     id: "publica",
-    nombre: "Página Pública (Demostración Hito 1 / Columna Accesible)",
+    nombre: "Página Pública (Demostración DW / Columna Accesible)",
     ruta: "/",
     archivo: "src/app/page.tsx",
-    h1: "Tablero Kanban — Hito 1",
+    h1: "Tablero Kanban — DW",
     landmarks: { header: true, nav: true, main: true, footer: true },
     elementosAccesibles: {
       skipLink: true,

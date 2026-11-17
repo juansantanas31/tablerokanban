@@ -71,7 +71,7 @@ export function Header() {
           <Link
             href="/"
             className={styles.iconButton}
-            title="Inicio / Hito 1"
+            title="Inicio"
             aria-label="Inicio y Demostración"
           >
             <Icon name="home" size={18} />

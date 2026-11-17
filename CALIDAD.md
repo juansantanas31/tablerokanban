@@ -27,7 +27,7 @@ En cumplimiento de la **Sección 14.1** y **Sección 14.6**, a continuación se 
 ## 2. Informes de Lighthouse (Móvil y Escritorio)
 
 Se auditaron las 3 páginas exigidas por la **Sección 14.6**:
-1. **Página Pública:** Demostración de Hito 1 (`/`)
+1. **Página Pública:** Demostración DW (`/`)
 2. **Página con Formulario:** Inicio de Sesión (`/login`)
 3. **Página con Sesión Iniciada:** Tablero Kanban Activo (`/tableros/tablero-demo-1`)
 
@@ -57,7 +57,7 @@ Diseño probado y capturado en los tres anchos obligatorios mediante emulación 
 └─────────────────┘     └────────┴────────┘       └──────┴──────┴──────┘
 ```
 
-### 3.1 Página Pública (Demostración de Hito 1)
+### 3.1 Página Pública (Demostración DW)
 - **360 px (Móvil):** [Ver captura `publica-360.png`](file:///c:/Users/SANTANA/Desktop/tablero%20Kamban/calidad/capturas/publica-360.png) — Una sola columna vertical, touch targets de botones de estado ≥ 44×44 px, textos legibles sin scroll horizontal.
 - **768 px (Tableta):** [Ver captura `publica-768.png`](file:///c:/Users/SANTANA/Desktop/tablero%20Kamban/calidad/capturas/publica-768.png) — Disposición balanceada de controles de prueba y contenedor de tarjeta centrado.
 - **1024 px (Escritorio):** [Ver captura `publica-1024.png`](file:///c:/Users/SANTANA/Desktop/tablero%20Kamban/calidad/capturas/publica-1024.png) — Vista desktop con cabecera fija, navegación completa y ancho de lectura controlado.
@@ -169,5 +169,5 @@ Durante la sustentación, el estudiante puede reproducir y comprobar cada una de
    *Resultado esperado:* Re-generación automática de las 9 capturas PNG en `calidad/capturas/` y de los reportes en `calidad/lighthouse/`.
 
 4. **Demostración Interactiva en Navegador:**
-   - Abrir `http://localhost:3000/` y alternar entre los estados de Carga, Vacío, Error y Éxito usando el panel de demostración del Hito 1.
+   - Abrir `http://localhost:3000/` y alternar entre los estados de Carga, Vacío, Error y Éxito usando el panel de demostración DW.
    - Navegar a `http://localhost:3000/tableros`, iniciar sesión, abrir un tablero, mover una tarjeta con el teclado o ratón y abrir su detalle en modal interceptado con URL.
