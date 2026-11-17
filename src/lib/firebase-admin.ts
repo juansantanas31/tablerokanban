@@ -57,9 +57,29 @@ function obtenerAppAdmin(): App {
   });
 }
 
-const app: App = obtenerAppAdmin();
+let appInstance: App;
+try {
+  appInstance = obtenerAppAdmin();
+} catch (e) {
+  console.warn("[firebase-admin] Fallo al inicializar App Admin, usando fallback:", e);
+  appInstance = initializeApp({ projectId: "demo-03-tablero-kanban" }, "fallback-kanban-app");
+}
+
+let authInstance: Auth;
+try {
+  authInstance = getAuth(appInstance);
+} catch {
+  authInstance = {} as Auth;
+}
+
+let dbInstance: Firestore;
+try {
+  dbInstance = getFirestore(appInstance);
+} catch {
+  dbInstance = {} as Firestore;
+}
 
 export const esCertificadoActivo = (): boolean => certificadoValido;
-export const adminAuth: Auth = getAuth(app);
-export const adminDb: Firestore = getFirestore(app);
-export default app;
+export const adminAuth: Auth = authInstance;
+export const adminDb: Firestore = dbInstance;
+export default appInstance;
