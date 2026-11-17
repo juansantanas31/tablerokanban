@@ -15,14 +15,29 @@ export const TarjetaService = {
       throw new ErrorNoEncontrado(`El tablero "${tableroId}" no existe`);
     }
 
-    const columnaExiste = tablero.columnas.some((col) => col.id === datos.columnaId);
+    let columnaDestinoId = datos.columnaId;
+    let columnaExiste = tablero.columnas.some((col) => col.id === columnaDestinoId);
+
+    if (!columnaExiste) {
+      const prefijoMatch = columnaDestinoId.match(/^(col-por-hacer|col-en-curso|col-hecho)-\d+$/);
+      if (prefijoMatch) {
+        const colEquivalente = tablero.columnas.find((col) =>
+          col.id.startsWith(prefijoMatch[1])
+        );
+        if (colEquivalente) {
+          columnaDestinoId = colEquivalente.id;
+          columnaExiste = true;
+        }
+      }
+    }
+
     if (!columnaExiste) {
       throw new ErrorNoEncontrado(`La columna "${datos.columnaId}" no existe en este tablero`);
     }
 
     // Regla de negocio Sección 8: máximo 50 tarjetas por columna
     const todasLasTarjetas = await TarjetaRepository.listarPorTablero(uid, tableroId);
-    const tarjetasEnColumna = todasLasTarjetas.filter((t) => t.columnaId === datos.columnaId);
+    const tarjetasEnColumna = todasLasTarjetas.filter((t) => t.columnaId === columnaDestinoId);
     if (tarjetasEnColumna.length >= 50) {
       throw new ErrorConflicto(
         `La columna ha alcanzado el límite máximo permitido de 50 tarjetas (Sección 8)`
@@ -37,7 +52,7 @@ export const TarjetaService = {
       id: `tarjeta-${Date.now()}`,
       titulo: datos.titulo,
       descripcion: datos.descripcion || "",
-      columnaId: datos.columnaId,
+      columnaId: columnaDestinoId,
       posicion: posicionCalculada,
       etiquetas: datos.etiquetas || [],
       vence: datos.vence || null,

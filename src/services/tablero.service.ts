@@ -26,14 +26,15 @@ export const TableroService = {
   },
 
   async crearTablero(uid: string, nombre: string): Promise<Tablero> {
-    const id = `tablero-${Date.now()}`;
+    const ts = Date.now();
+    const id = `tablero-${ts}`;
     const nuevoTablero: Tablero = {
       id,
       nombre: nombre.trim(),
       columnas: [
-        { id: `col-por-hacer-${Date.now()}`, nombre: "Por hacer", limiteWip: 10 },
-        { id: `col-en-curso-${Date.now()}`, nombre: "En curso", limiteWip: 3 },
-        { id: `col-hecho-${Date.now()}`, nombre: "Hecho" },
+        { id: `col-por-hacer-${ts}`, nombre: "Por hacer", limiteWip: 10 },
+        { id: `col-en-curso-${ts}`, nombre: "En curso", limiteWip: 3 },
+        { id: `col-hecho-${ts}`, nombre: "Hecho" },
       ],
       creadoEn: new Date().toISOString(),
     };

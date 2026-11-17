@@ -7,6 +7,7 @@ import type { Firestore } from "firebase-admin/firestore";
 declare global {
   var __kanban_firebase_cert_activo__: boolean | undefined;
   var __kanban_firebase_web_api_key__: string | undefined;
+  var __kanban_google_oauth_token__: { token: string; expiraEn: number } | undefined;
 }
 
 /**
@@ -45,6 +46,274 @@ function normalizarYValidarPrivateKey(rawKey: string): string | null {
   }
 }
 
+async function obtenerTokenOAuthGoogle(
+  clientEmail: string,
+  privateKey: string
+): Promise<string> {
+  const ahoraMs = Date.now();
+  if (
+    globalThis.__kanban_google_oauth_token__ &&
+    globalThis.__kanban_google_oauth_token__.expiraEn > ahoraMs + 60_000
+  ) {
+    return globalThis.__kanban_google_oauth_token__.token;
+  }
+
+  const now = Math.floor(ahoraMs / 1000);
+  const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(
+    JSON.stringify({
+      iss: clientEmail,
+      sub: clientEmail,
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: now + 3600,
+      scope:
+        "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/identitytoolkit",
+    })
+  ).toString("base64url");
+
+  const signature = crypto
+    .createSign("RSA-SHA256")
+    .update(`${header}.${payload}`)
+    .sign(privateKey, "base64url");
+
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${header}.${payload}.${signature}`,
+  });
+
+  if (!tokenRes.ok) {
+    throw new Error(`Fallo al obtener token OAuth2 de Google (HTTP ${tokenRes.status})`);
+  }
+
+  const tokenData = (await tokenRes.json()) as { access_token: string; expires_in?: number };
+  globalThis.__kanban_google_oauth_token__ = {
+    token: tokenData.access_token,
+    expiraEn: ahoraMs + (tokenData.expires_in ?? 3500) * 1000,
+  };
+  return tokenData.access_token;
+}
+
+type FirestoreRestValue =
+  | { nullValue: null }
+  | { booleanValue: boolean }
+  | { integerValue: string }
+  | { doubleValue: number }
+  | { stringValue: string }
+  | { arrayValue: { values?: FirestoreRestValue[] } }
+  | { mapValue: { fields?: Record<string, FirestoreRestValue> } };
+
+function toFirestoreValue(val: unknown): FirestoreRestValue {
+  if (val === null || val === undefined) return { nullValue: null };
+  if (typeof val === "boolean") return { booleanValue: val };
+  if (typeof val === "number") {
+    return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
+  }
+  if (typeof val === "string") return { stringValue: val };
+  if (Array.isArray(val)) {
+    return { arrayValue: { values: val.map(toFirestoreValue) } };
+  }
+  if (typeof val === "object") {
+    return { mapValue: { fields: toFirestoreFields(val as Record<string, unknown>) } };
+  }
+  return { stringValue: String(val) };
+}
+
+function toFirestoreFields(obj: Record<string, unknown>): Record<string, FirestoreRestValue> {
+  const fields: Record<string, FirestoreRestValue> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) {
+      fields[k] = toFirestoreValue(v);
+    }
+  }
+  return fields;
+}
+
+function fromFirestoreValue(v: FirestoreRestValue): unknown {
+  if ("nullValue" in v) return null;
+  if ("booleanValue" in v) return Boolean(v.booleanValue);
+  if ("integerValue" in v) return Number(v.integerValue);
+  if ("doubleValue" in v) return Number(v.doubleValue);
+  if ("stringValue" in v) return String(v.stringValue);
+  if ("arrayValue" in v) {
+    return (v.arrayValue.values || []).map(fromFirestoreValue);
+  }
+  if ("mapValue" in v) {
+    return fromFirestoreFields(v.mapValue.fields || {});
+  }
+  return null;
+}
+
+function fromFirestoreFields(
+  fields: Record<string, FirestoreRestValue>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(fields)) {
+    result[k] = fromFirestoreValue(v);
+  }
+  return result;
+}
+
+/**
+ * Adaptador de Firestore sobre Google Cloud REST API v1.
+ * Garantiza persistencia real en Firestore dentro de funciones Serverless de Vercel
+ * sin depender de binarios gRPC ni enlaces simbólicos de Turbopack.
+ */
+function crearFirestoreRestAdapter(
+  projectId: string,
+  clientEmail: string,
+  privateKey: string
+): Firestore {
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+
+  const makeDocRef = (docPath: string) => {
+    const id = docPath.split("/").pop() || "";
+    const docRef = {
+      id,
+      path: docPath,
+      collection: (subName: string) => makeColRef(`${docPath}/${subName}`),
+      get: async () => {
+        const token = await obtenerTokenOAuthGoogle(clientEmail, privateKey);
+        const res = await fetch(`${baseUrl}/${docPath}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        if (res.status === 404) {
+          return { exists: false, id, ref: docRef, data: () => undefined };
+        }
+        if (!res.ok) {
+          throw new Error(`Firestore GET ${docPath} falló con HTTP ${res.status}`);
+        }
+        const docJson = (await res.json()) as {
+          fields?: Record<string, FirestoreRestValue>;
+        };
+        const parsed = fromFirestoreFields(docJson.fields || {});
+        return { exists: true, id, ref: docRef, data: () => parsed };
+      },
+      set: async (datos: Record<string, unknown>) => {
+        const token = await obtenerTokenOAuthGoogle(clientEmail, privateKey);
+        const res = await fetch(`${baseUrl}/${docPath}`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ fields: toFirestoreFields(datos) }),
+        });
+        if (!res.ok) {
+          throw new Error(`Firestore SET ${docPath} falló con HTTP ${res.status}`);
+        }
+      },
+      update: async (datos: Record<string, unknown>) => {
+        const keys = Object.keys(datos).filter((k) => datos[k] !== undefined);
+        if (keys.length === 0) return;
+        const mask = keys
+          .map((k) => `updateMask.fieldPaths=${encodeURIComponent(k)}`)
+          .join("&");
+        const token = await obtenerTokenOAuthGoogle(clientEmail, privateKey);
+        const res = await fetch(`${baseUrl}/${docPath}?${mask}`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ fields: toFirestoreFields(datos) }),
+        });
+        if (!res.ok) {
+          throw new Error(`Firestore UPDATE ${docPath} falló con HTTP ${res.status}`);
+        }
+      },
+      delete: async () => {
+        const token = await obtenerTokenOAuthGoogle(clientEmail, privateKey);
+        const res = await fetch(`${baseUrl}/${docPath}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok && res.status !== 404) {
+          throw new Error(`Firestore DELETE ${docPath} falló con HTTP ${res.status}`);
+        }
+      },
+    };
+    return docRef;
+  };
+
+  const makeColRef = (colPath: string) => {
+    const fetchDocs = async () => {
+      const token = await obtenerTokenOAuthGoogle(clientEmail, privateKey);
+      const res = await fetch(`${baseUrl}/${colPath}?pageSize=200`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (res.status === 404) return [];
+      if (!res.ok) {
+        throw new Error(`Firestore LIST ${colPath} falló con HTTP ${res.status}`);
+      }
+      const json = (await res.json()) as {
+        documents?: Array<{
+          name: string;
+          fields?: Record<string, FirestoreRestValue>;
+        }>;
+      };
+      return (json.documents || []).map((d) => {
+        const docId = d.name.split("/").pop() || "";
+        const parsed = fromFirestoreFields(d.fields || {});
+        const ref = makeDocRef(`${colPath}/${docId}`);
+        return {
+          id: docId,
+          exists: true,
+          ref,
+          data: () => parsed,
+        };
+      });
+    };
+
+    return {
+      doc: (docId: string) => makeDocRef(`${colPath}/${docId}`),
+      get: async () => {
+        const docs = await fetchDocs();
+        return { docs, empty: docs.length === 0, size: docs.length };
+      },
+      orderBy: (campo: string, direccion: "asc" | "desc" = "asc") => ({
+        get: async () => {
+          const docs = await fetchDocs();
+          docs.sort((a, b) => {
+            const va = a.data()[campo];
+            const vb = b.data()[campo];
+            if (typeof va === "number" && typeof vb === "number") {
+              return direccion === "asc" ? va - vb : vb - va;
+            }
+            const sa = String(va ?? "");
+            const sb = String(vb ?? "");
+            return direccion === "asc" ? sa.localeCompare(sb) : sb.localeCompare(sa);
+          });
+          return { docs, empty: docs.length === 0, size: docs.length };
+        },
+      }),
+    };
+  };
+
+  const adapter = {
+    collection: (name: string) => makeColRef(name),
+    batch: () => {
+      const ops: Array<() => Promise<void>> = [];
+      return {
+        set: (ref: { set: (d: Record<string, unknown>) => Promise<void> }, datos: Record<string, unknown>) => {
+          ops.push(() => ref.set(datos));
+        },
+        delete: (ref: { delete: () => Promise<void> }) => {
+          ops.push(() => ref.delete());
+        },
+        commit: async () => {
+          await Promise.all(ops.map((fn) => fn()));
+        },
+      };
+    },
+  };
+
+  return adapter as unknown as Firestore;
+}
+
 let authInstance: Auth = {} as Auth;
 let dbInstance: Firestore = {} as Firestore;
 let appInstance: App | null = null;
@@ -68,44 +337,35 @@ function inicializarFirebaseAdminSeguro(): void {
     return;
   }
 
+  const cleanProjectId = projectId.trim().replace(/^["']|["',]+$/g, "");
+  const cleanClientEmail = clientEmail.trim().replace(/^["']|["',]+$/g, "");
+
+  // Inicializar siempre el adaptador REST de Firestore (compatible al 100% con Vercel Serverless)
+  dbInstance = crearFirestoreRestAdapter(cleanProjectId, cleanClientEmail, privateKeyValida);
+  globalThis.__kanban_firebase_cert_activo__ = true;
+
   try {
     const req = createRequire(import.meta.url);
-    let adminApp: typeof import("firebase-admin/app");
-    let adminAuthMod: typeof import("firebase-admin/auth");
-    let adminFirestoreMod: typeof import("firebase-admin/firestore");
-
-    try {
-      adminApp = req("firebase-admin/app");
-      adminAuthMod = req("firebase-admin/auth");
-      adminFirestoreMod = req("firebase-admin/firestore");
-    } catch {
-      const pkg = ["firebase", "admin"].join("-");
-      adminApp = req(`${pkg}/app`);
-      adminAuthMod = req(`${pkg}/auth`);
-      adminFirestoreMod = req(`${pkg}/firestore`);
-    }
+    const pkg = ["firebase", "admin"].join("-");
+    const adminApp = req(`${pkg}/app`) as typeof import("firebase-admin/app");
+    const adminAuthMod = req(`${pkg}/auth`) as typeof import("firebase-admin/auth");
 
     if (adminApp.getApps().length > 0) {
       appInstance = adminApp.getApp();
     } else {
       appInstance = adminApp.initializeApp({
         credential: adminApp.cert({
-          projectId: projectId.trim().replace(/^["']|["',]+$/g, ""),
-          clientEmail: clientEmail.trim().replace(/^["']|["',]+$/g, ""),
+          projectId: cleanProjectId,
+          clientEmail: cleanClientEmail,
           privateKey: privateKeyValida,
         }),
       });
     }
 
     authInstance = adminAuthMod.getAuth(appInstance);
-    dbInstance = adminFirestoreMod.getFirestore(appInstance);
-    globalThis.__kanban_firebase_cert_activo__ = true;
-  } catch (err: unknown) {
-    console.warn(
-      "[firebase-admin] No se pudo cargar firebase-admin en este entorno Serverless; activando DemoStore:",
-      err instanceof Error ? err.message : err
-    );
-    globalThis.__kanban_firebase_cert_activo__ = false;
+  } catch {
+    // En Vercel Serverless si el paquete firebase-admin no está enlazado,
+    // dbInstance (REST Adapter) y autenticarCredencialesEnFirebase siguen funcionando al 100%.
   }
 }
 

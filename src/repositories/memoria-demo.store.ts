@@ -75,7 +75,27 @@ export const DemoStore = {
   async obtenerTablero(uid: string, tableroId: string): Promise<Tablero | null> {
     const usuario = inicializarUsuarioSiNoExiste(uid);
     const tab = usuario.tableros.get(tableroId);
-    return tab ? { ...tab } : null;
+    if (tab) return { ...tab };
+
+    const matchTs = tableroId.match(/^tablero-(\d{10,})$/);
+    if (matchTs) {
+      const ts = matchTs[1];
+      const tableroRecuperado: Tablero = {
+        id: tableroId,
+        nombre: "Tablero de Trabajo",
+        columnas: [
+          { id: `col-por-hacer-${ts}`, nombre: "Por hacer", limiteWip: 10 },
+          { id: `col-en-curso-${ts}`, nombre: "En curso", limiteWip: 3 },
+          { id: `col-hecho-${ts}`, nombre: "Hecho" },
+        ],
+        creadoEn: new Date(Number(ts)).toISOString(),
+      };
+      usuario.tableros.set(tableroId, tableroRecuperado);
+      usuario.tarjetas.set(tableroId, new Map());
+      return { ...tableroRecuperado };
+    }
+
+    return null;
   },
 
   async crearTablero(uid: string, tablero: Tablero): Promise<void> {

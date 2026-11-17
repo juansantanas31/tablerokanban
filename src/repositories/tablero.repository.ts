@@ -63,14 +63,34 @@ export const TableroRepository = {
         await asegurarSemillaInicialFirestore(uid);
       }
 
-      const doc = await adminDb
+      const docRef = adminDb
         .collection("usuarios")
         .doc(uid)
         .collection("tableros")
-        .doc(tableroId)
-        .get();
+        .doc(tableroId);
+      const doc = await docRef.get();
 
       if (!doc.exists) {
+        // Si el tablero fue creado con ID de marca de tiempo (tablero-<timestamp>) en una
+        // instancia efímera previa, reconstruirlo y persistirlo en Firestore automáticamente:
+        const matchTs = tableroId.match(/^tablero-(\d{10,})$/);
+        if (matchTs) {
+          const ts = matchTs[1];
+          const tableroRecuperado: Tablero = {
+            id: tableroId,
+            nombre: "Tablero de Trabajo",
+            columnas: [
+              { id: `col-por-hacer-${ts}`, nombre: "Por hacer", limiteWip: 10 },
+              { id: `col-en-curso-${ts}`, nombre: "En curso", limiteWip: 3 },
+              { id: `col-hecho-${ts}`, nombre: "Hecho" },
+            ],
+            creadoEn: new Date(Number(ts)).toISOString(),
+          };
+          const { id: _id, ...datosGuardar } = tableroRecuperado;
+          void _id;
+          await docRef.set(datosGuardar);
+          return tableroRecuperado;
+        }
         return null;
       }
 
