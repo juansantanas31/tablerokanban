@@ -2,7 +2,9 @@ import { initializeApp, getApps, getApp, cert, App } from "firebase-admin/app";
 import { getAuth, Auth } from "firebase-admin/auth";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 
-let certificadoValido = false;
+declare global {
+  var __kanban_firebase_cert_activo__: boolean | undefined;
+}
 
 function limpiarPrivateKey(rawKey: string): string {
   let key = rawKey.trim();
@@ -22,13 +24,22 @@ function limpiarPrivateKey(rawKey: string): string {
 }
 
 function obtenerAppAdmin(): App {
-  if (getApps().length > 0) {
-    return getApp();
-  }
-
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (getApps().length > 0) {
+    if (globalThis.__kanban_firebase_cert_activo__ === undefined) {
+      globalThis.__kanban_firebase_cert_activo__ = Boolean(
+        projectId &&
+          clientEmail &&
+          rawPrivateKey &&
+          !rawPrivateKey.includes("DEMO") &&
+          rawPrivateKey.length >= 50
+      );
+    }
+    return getApp();
+  }
 
   if (projectId && clientEmail && rawPrivateKey) {
     try {
@@ -40,15 +51,17 @@ function obtenerAppAdmin(): App {
           privateKey,
         }),
       });
-      certificadoValido = true;
+      globalThis.__kanban_firebase_cert_activo__ = true;
       return appInstancia;
     } catch (err: unknown) {
       console.warn(
         "[firebase-admin] Formato de clave privada no soportado por OpenSSL o inválido. Activando modo evaluación:",
         err instanceof Error ? err.message : err
       );
-      certificadoValido = false;
+      globalThis.__kanban_firebase_cert_activo__ = false;
     }
+  } else {
+    globalThis.__kanban_firebase_cert_activo__ = false;
   }
 
   // Inicialización de respaldo para entornos de prueba o compilación de Next.js
@@ -62,6 +75,7 @@ try {
   appInstance = obtenerAppAdmin();
 } catch (e) {
   console.warn("[firebase-admin] Fallo al inicializar App Admin, usando fallback:", e);
+  globalThis.__kanban_firebase_cert_activo__ = false;
   appInstance = initializeApp({ projectId: "demo-03-tablero-kanban" }, "fallback-kanban-app");
 }
 
@@ -79,7 +93,8 @@ try {
   dbInstance = {} as Firestore;
 }
 
-export const esCertificadoActivo = (): boolean => certificadoValido;
+export const esCertificadoActivo = (): boolean =>
+  globalThis.__kanban_firebase_cert_activo__ === true;
 export const adminAuth: Auth = authInstance;
 export const adminDb: Firestore = dbInstance;
 export default appInstance;

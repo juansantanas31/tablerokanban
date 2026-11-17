@@ -8,19 +8,24 @@ export const TarjetaRepository = {
       return DemoStore.listarTarjetas(uid, tableroId);
     }
 
-    const snapshot = await adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .doc(tableroId)
-      .collection("tarjetas")
-      .orderBy("posicion", "asc")
-      .get();
+    try {
+      const snapshot = await adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .doc(tableroId)
+        .collection("tarjetas")
+        .orderBy("posicion", "asc")
+        .get();
 
-    return snapshot.docs.map((doc) => ({
-      ...(doc.data() as Omit<Tarjeta, "id">),
-      id: doc.id,
-    }));
+      return snapshot.docs.map((doc) => ({
+        ...(doc.data() as Omit<Tarjeta, "id">),
+        id: doc.id,
+      }));
+    } catch (err) {
+      console.warn("[TarjetaRepository] Fallo en Firestore al listar, usando respaldo:", err);
+      return DemoStore.listarTarjetas(uid, tableroId);
+    }
   },
 
   async obtenerPorId(
@@ -32,23 +37,28 @@ export const TarjetaRepository = {
       return DemoStore.obtenerTarjeta(uid, tableroId, tarjetaId);
     }
 
-    const doc = await adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .doc(tableroId)
-      .collection("tarjetas")
-      .doc(tarjetaId)
-      .get();
+    try {
+      const doc = await adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .doc(tableroId)
+        .collection("tarjetas")
+        .doc(tarjetaId)
+        .get();
 
-    if (!doc.exists) {
-      return null;
+      if (!doc.exists) {
+        return null;
+      }
+
+      return {
+        ...(doc.data() as Omit<Tarjeta, "id">),
+        id: doc.id,
+      };
+    } catch (err) {
+      console.warn("[TarjetaRepository] Fallo en Firestore al obtener, usando respaldo:", err);
+      return DemoStore.obtenerTarjeta(uid, tableroId, tarjetaId);
     }
-
-    return {
-      ...(doc.data() as Omit<Tarjeta, "id">),
-      id: doc.id,
-    };
   },
 
   async crear(uid: string, tableroId: string, tarjeta: Tarjeta): Promise<void> {
@@ -56,15 +66,20 @@ export const TarjetaRepository = {
       return DemoStore.crearTarjeta(uid, tableroId, tarjeta);
     }
 
-    const { id, ...datos } = tarjeta;
-    await adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .doc(tableroId)
-      .collection("tarjetas")
-      .doc(id)
-      .set(datos);
+    try {
+      const { id, ...datos } = tarjeta;
+      await adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .doc(tableroId)
+        .collection("tarjetas")
+        .doc(id)
+        .set(datos);
+    } catch (err) {
+      console.warn("[TarjetaRepository] Fallo en Firestore al crear, usando respaldo:", err);
+      await DemoStore.crearTarjeta(uid, tableroId, tarjeta);
+    }
   },
 
   async actualizar(
@@ -77,14 +92,19 @@ export const TarjetaRepository = {
       return DemoStore.actualizarTarjeta(uid, tableroId, tarjetaId, datos);
     }
 
-    await adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .doc(tableroId)
-      .collection("tarjetas")
-      .doc(tarjetaId)
-      .update(datos);
+    try {
+      await adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .doc(tableroId)
+        .collection("tarjetas")
+        .doc(tarjetaId)
+        .update(datos);
+    } catch (err) {
+      console.warn("[TarjetaRepository] Fallo en Firestore al actualizar, usando respaldo:", err);
+      await DemoStore.actualizarTarjeta(uid, tableroId, tarjetaId, datos);
+    }
   },
 
   async eliminar(uid: string, tableroId: string, tarjetaId: string): Promise<void> {
@@ -92,13 +112,18 @@ export const TarjetaRepository = {
       return DemoStore.eliminarTarjeta(uid, tableroId, tarjetaId);
     }
 
-    await adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .doc(tableroId)
-      .collection("tarjetas")
-      .doc(tarjetaId)
-      .delete();
+    try {
+      await adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .doc(tableroId)
+        .collection("tarjetas")
+        .doc(tarjetaId)
+        .delete();
+    } catch (err) {
+      console.warn("[TarjetaRepository] Fallo en Firestore al eliminar, usando respaldo:", err);
+      await DemoStore.eliminarTarjeta(uid, tableroId, tarjetaId);
+    }
   },
 };

@@ -1,6 +1,31 @@
 import { adminDb } from "@/lib/firebase-admin";
-import { Tablero } from "@/schemas/tarjeta.schema";
+import { Tablero, Tarjeta } from "@/schemas/tarjeta.schema";
+import datosEjemplo from "../../public/datos-ejemplo/tablero-ejemplo.json";
 import { esModoDemo, DemoStore } from "./memoria-demo.store";
+
+async function asegurarSemillaInicialFirestore(uid: string): Promise<void> {
+  const userRef = adminDb.collection("usuarios").doc(uid);
+  const userDoc = await userRef.get();
+  if (userDoc.exists) return;
+
+  const tableroInicial = datosEjemplo.tablero as Tablero;
+  const tarjetasIniciales = datosEjemplo.tarjetas as Tarjeta[];
+
+  const batch = adminDb.batch();
+  batch.set(userRef, { inicializadoEn: new Date().toISOString() });
+
+  const { id: tableroId, ...datosTablero } = tableroInicial;
+  const tableroRef = userRef.collection("tableros").doc(tableroId);
+  batch.set(tableroRef, datosTablero);
+
+  for (const tarjeta of tarjetasIniciales) {
+    const { id: tarjetaId, ...datosTarjeta } = tarjeta;
+    const tarjetaRef = tableroRef.collection("tarjetas").doc(tarjetaId);
+    batch.set(tarjetaRef, datosTarjeta);
+  }
+
+  await batch.commit();
+}
 
 export const TableroRepository = {
   async listarPorUsuario(uid: string): Promise<Tablero[]> {
@@ -8,17 +33,24 @@ export const TableroRepository = {
       return DemoStore.listarTableros(uid);
     }
 
-    const snapshot = await adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .orderBy("creadoEn", "desc")
-      .get();
+    try {
+      await asegurarSemillaInicialFirestore(uid);
 
-    return snapshot.docs.map((doc) => ({
-      ...(doc.data() as Omit<Tablero, "id">),
-      id: doc.id,
-    }));
+      const snapshot = await adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .orderBy("creadoEn", "desc")
+        .get();
+
+      return snapshot.docs.map((doc) => ({
+        ...(doc.data() as Omit<Tablero, "id">),
+        id: doc.id,
+      }));
+    } catch (err) {
+      console.warn("[TableroRepository] Fallo en Firestore al listar, usando respaldo:", err);
+      return DemoStore.listarTableros(uid);
+    }
   },
 
   async obtenerPorId(uid: string, tableroId: string): Promise<Tablero | null> {
@@ -26,21 +58,30 @@ export const TableroRepository = {
       return DemoStore.obtenerTablero(uid, tableroId);
     }
 
-    const doc = await adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .doc(tableroId)
-      .get();
+    try {
+      if (tableroId === "tablero-demo-1") {
+        await asegurarSemillaInicialFirestore(uid);
+      }
 
-    if (!doc.exists) {
-      return null;
+      const doc = await adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .doc(tableroId)
+        .get();
+
+      if (!doc.exists) {
+        return null;
+      }
+
+      return {
+        ...(doc.data() as Omit<Tablero, "id">),
+        id: doc.id,
+      };
+    } catch (err) {
+      console.warn("[TableroRepository] Fallo en Firestore al obtener, usando respaldo:", err);
+      return DemoStore.obtenerTablero(uid, tableroId);
     }
-
-    return {
-      ...(doc.data() as Omit<Tablero, "id">),
-      id: doc.id,
-    };
   },
 
   async crear(uid: string, tablero: Tablero): Promise<void> {
@@ -48,13 +89,18 @@ export const TableroRepository = {
       return DemoStore.crearTablero(uid, tablero);
     }
 
-    const { id, ...datos } = tablero;
-    await adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .doc(id)
-      .set(datos);
+    try {
+      const { id, ...datos } = tablero;
+      await adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .doc(id)
+        .set(datos);
+    } catch (err) {
+      console.warn("[TableroRepository] Fallo en Firestore al crear, usando respaldo:", err);
+      await DemoStore.crearTablero(uid, tablero);
+    }
   },
 
   async eliminar(uid: string, tableroId: string): Promise<void> {
@@ -62,21 +108,26 @@ export const TableroRepository = {
       return DemoStore.eliminarTablero(uid, tableroId);
     }
 
-    const tableroRef = adminDb
-      .collection("usuarios")
-      .doc(uid)
-      .collection("tableros")
-      .doc(tableroId);
+    try {
+      const tableroRef = adminDb
+        .collection("usuarios")
+        .doc(uid)
+        .collection("tableros")
+        .doc(tableroId);
 
-    // Eliminar también las tarjetas en subcolección
-    const tarjetasSnapshot = await tableroRef.collection("tarjetas").get();
-    const batch = adminDb.batch();
+      // Eliminar también las tarjetas en subcolección
+      const tarjetasSnapshot = await tableroRef.collection("tarjetas").get();
+      const batch = adminDb.batch();
 
-    tarjetasSnapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
+      tarjetasSnapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
 
-    batch.delete(tableroRef);
-    await batch.commit();
+      batch.delete(tableroRef);
+      await batch.commit();
+    } catch (err) {
+      console.warn("[TableroRepository] Fallo en Firestore al eliminar, usando respaldo:", err);
+      await DemoStore.eliminarTablero(uid, tableroId);
+    }
   },
 };
