@@ -35,8 +35,11 @@ export function Tarjeta({
     e.currentTarget.classList.remove(styles.cardDragging);
   };
 
-  // Código identificador mono
-  const codigo = tarjeta.id.toUpperCase().startsWith("LIN-")
+  // Código identificador compacto (evita textos largos como tarjeta-1794942663304 que solapan etiquetas)
+  const matchTimestamp = tarjeta.id.match(/^tarjeta-(\d{4,})$/i);
+  const codigo = matchTimestamp
+    ? `TAR-${matchTimestamp[1].slice(-4)}`
+    : tarjeta.id.toUpperCase().startsWith("LIN-")
     ? tarjeta.id.toUpperCase()
     : tarjeta.id;
 
@@ -59,13 +62,12 @@ export function Tarjeta({
         aria-labelledby={`tarjeta-titulo-${tarjeta.id}`}
         aria-describedby={tarjeta.descripcion ? `tarjeta-desc-${tarjeta.id}` : undefined}
       >
-        {/* Top Meta Row */}
+        {/* Top Meta Row: Código a la izquierda y Prioridad a la derecha sin colisión */}
         <div className={styles.topMeta}>
           <div className={styles.idAndTag}>
-            <span className={styles.cardCode}>{codigo}</span>
-            {tarjeta.etiquetas.length > 0 && (
-              <span className={styles.tagBadge}>{tarjeta.etiquetas[0]}</span>
-            )}
+            <span className={styles.cardCode} title={tarjeta.id}>
+              {codigo}
+            </span>
           </div>
 
           <div className={styles.topRightActions}>
@@ -90,10 +92,10 @@ export function Tarjeta({
           </p>
         )}
 
-        {/* Card Footer: Etiquetas reales y fecha de vencimiento real */}
+        {/* Card Footer: Etiquetas reales con flex-wrap y fecha de vencimiento */}
         <div className={styles.footer}>
-          <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap", alignItems: "center" }}>
-            {tarjeta.etiquetas.slice(1).map((tag) => (
+          <div className={styles.tagsWrap}>
+            {tarjeta.etiquetas.map((tag) => (
               <span key={tag} className={styles.tagBadge}>
                 {tag}
               </span>

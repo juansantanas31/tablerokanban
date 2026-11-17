@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState, useMemo, useOptimistic, useTransition, useCallback, useReducer } from "react";
+import { use, useEffect, useState, useMemo, useOptimistic, useTransition, useCallback, useReducer, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Columna } from "@/components/Columna/Columna";
@@ -73,6 +73,93 @@ export default function TableroDetallePage({ params }: PageProps) {
   const [columnaSeleccionadaId, setColumnaSeleccionadaId] = useState<string>("");
   const [tarjetaDetalleFallback, setTarjetaDetalleFallback] = useState<Tarjeta | null>(null);
   const [columnaTabSeleccionada, setColumnaTabSeleccionada] = useState<string | null>(null);
+  const [arrastrandoActiva, setArrastrandoActiva] = useState(false);
+  const [tabDragOverId, setTabDragOverId] = useState<string | null>(null);
+
+  const columnsWrapperRef = useRef<HTMLElement | null>(null);
+  const isDraggingRef = useRef(false);
+  const pointerPosRef = useRef<{ x: number; y: number }>({ x: -1, y: -1 });
+  const rafIdRef = useRef<number | null>(null);
+
+  // Motor de auto-desplazamiento (vertical y horizontal) a 60fps siguiendo el puntero durante Drag & Drop
+  useEffect(() => {
+    const ZONA_VERTICAL = 160;
+    const ZONA_HORIZONTAL = 130;
+
+    const bucleAutoScroll = () => {
+      if (!isDraggingRef.current) return;
+
+      const { x, y } = pointerPosRef.current;
+      if (y >= 0 && typeof window !== "undefined") {
+        const vh = window.innerHeight;
+        if (y < ZONA_VERTICAL) {
+          const intensidad = (ZONA_VERTICAL - y) / ZONA_VERTICAL;
+          const deltaY = -Math.max(5, Math.round(intensidad * 22));
+          window.scrollBy(0, deltaY);
+        } else if (y > vh - ZONA_VERTICAL) {
+          const intensidad = (y - (vh - ZONA_VERTICAL)) / ZONA_VERTICAL;
+          const deltaY = Math.max(5, Math.round(intensidad * 22));
+          window.scrollBy(0, deltaY);
+        }
+      }
+
+      if (x >= 0 && typeof window !== "undefined" && columnsWrapperRef.current) {
+        const vw = window.innerWidth;
+        if (x < ZONA_HORIZONTAL) {
+          const intensidadX = (ZONA_HORIZONTAL - x) / ZONA_HORIZONTAL;
+          const deltaX = -Math.max(4, Math.round(intensidadX * 18));
+          columnsWrapperRef.current.scrollBy(deltaX, 0);
+        } else if (x > vw - ZONA_HORIZONTAL) {
+          const intensidadX = (x - (vw - ZONA_HORIZONTAL)) / ZONA_HORIZONTAL;
+          const deltaX = Math.max(4, Math.round(intensidadX * 18));
+          columnsWrapperRef.current.scrollBy(deltaX, 0);
+        }
+      }
+
+      rafIdRef.current = window.requestAnimationFrame(bucleAutoScroll);
+    };
+
+    const onDragStartWindow = (e: DragEvent) => {
+      isDraggingRef.current = true;
+      pointerPosRef.current = { x: e.clientX, y: e.clientY };
+      setArrastrandoActiva(true);
+      if (rafIdRef.current !== null) {
+        window.cancelAnimationFrame(rafIdRef.current);
+      }
+      rafIdRef.current = window.requestAnimationFrame(bucleAutoScroll);
+    };
+
+    const onDragOverWindow = (e: DragEvent) => {
+      if (!isDraggingRef.current) return;
+      pointerPosRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const finalizarArrastre = () => {
+      isDraggingRef.current = false;
+      pointerPosRef.current = { x: -1, y: -1 };
+      setArrastrandoActiva(false);
+      setTabDragOverId(null);
+      if (rafIdRef.current !== null) {
+        window.cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+
+    window.addEventListener("dragstart", onDragStartWindow);
+    window.addEventListener("dragover", onDragOverWindow, { passive: true });
+    window.addEventListener("dragend", finalizarArrastre);
+    window.addEventListener("drop", finalizarArrastre);
+
+    return () => {
+      window.removeEventListener("dragstart", onDragStartWindow);
+      window.removeEventListener("dragover", onDragOverWindow);
+      window.removeEventListener("dragend", finalizarArrastre);
+      window.removeEventListener("drop", finalizarArrastre);
+      if (rafIdRef.current !== null) {
+        window.cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, []);
 
   // Cargar datos reales desde GET /api/tableros/:id
   const cargarTablero = useCallback(async () => {
@@ -367,19 +454,48 @@ export default function TableroDetallePage({ params }: PageProps) {
           </button>
         </div>
 
-        {/* Carrusel/stepper de columnas para pantallas estrechas y móviles */}
-        <div className={styles.columnStepper} role="tablist" aria-label="Pestañas de columnas">
+        {/* Carrusel/stepper de columnas con soporte directo de arrastrar y soltar */}
+        <div
+          className={`${styles.columnStepper} ${arrastrandoActiva ? styles.columnStepperDragging : ""}`}
+          role="tablist"
+          aria-label="Pestañas de columnas"
+        >
           {state.tablero.columnas.map((col) => {
             const count = tarjetasOptimistas.filter((t) => t.columnaId === col.id).length;
             const esActiva = (columnaActivaId || state.tablero?.columnas[0]?.id) === col.id;
+            const esDragTarget = tabDragOverId === col.id;
             return (
               <button
                 key={col.id}
                 role="tab"
                 aria-selected={esActiva}
                 type="button"
-                className={`${styles.columnTab} ${esActiva ? styles.columnTabActive : ""}`}
-                onClick={() => setColumnaTabSeleccionada(col.id)}
+                className={`${styles.columnTab} ${esActiva ? styles.columnTabActive : ""} ${esDragTarget ? styles.columnTabDragOver : ""}`}
+                onClick={() => {
+                  setColumnaTabSeleccionada(col.id);
+                  const el = document.getElementById(`columna-seccion-${col.id}`);
+                  el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  if (tabDragOverId !== col.id) {
+                    setTabDragOverId(col.id);
+                    const el = document.getElementById(`columna-seccion-${col.id}`);
+                    el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                  }
+                }}
+                onDragLeave={() => {
+                  if (tabDragOverId === col.id) setTabDragOverId(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setTabDragOverId(null);
+                  const tarjetaId = e.dataTransfer.getData("text/plain");
+                  if (tarjetaId) {
+                    moverTarjetaAColumna(tarjetaId, col.id);
+                  }
+                }}
               >
                 <span>{col.nombre}</span>
                 <span className={styles.tabBadge}>{count}</span>
@@ -387,6 +503,15 @@ export default function TableroDetallePage({ params }: PageProps) {
             );
           })}
         </div>
+
+        {arrastrandoActiva && (
+          <div className={styles.dragHelperBanner} role="status">
+            <Icon name="unfold_more" size={14} />
+            <span>
+              Arrastra hacia el borde superior o inferior para subir o bajar la pantalla, o suelta sobre una categoría.
+            </span>
+          </div>
+        )}
 
         {/* Barra de Búsqueda y Filtros (RF-05) */}
         <FiltrosBar
@@ -403,7 +528,11 @@ export default function TableroDetallePage({ params }: PageProps) {
       </header>
 
       {/* Región de Columnas del Tablero Kanban (sin <main> anidado) */}
-      <section className={styles.columnsWrapper} aria-label="Columnas del tablero">
+      <section
+        ref={columnsWrapperRef}
+        className={styles.columnsWrapper}
+        aria-label="Columnas del tablero"
+      >
         {state.tablero.columnas.map((col) => {
           const tarjetasColumna = tarjetasFiltradas
             .filter((t) => t.columnaId === col.id)

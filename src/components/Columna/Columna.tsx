@@ -44,7 +44,11 @@ export function Columna({
     if (!isDragOver) setIsDragOver(true);
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => {
+    const related = e.relatedTarget as Node | null;
+    if (related && e.currentTarget.contains(related)) {
+      return;
+    }
     setIsDragOver(false);
   };
 
@@ -61,6 +65,7 @@ export function Columna({
 
   return (
     <section
+      id={`columna-seccion-${columna.id}`}
       className={`${styles.column} ${isDragOver ? styles.columnDragOver : ""}`}
       aria-labelledby={columnaIdTitulo}
       onDragOver={handleDragOver}
@@ -94,6 +99,13 @@ export function Columna({
           </button>
         )}
       </header>
+
+      {isDragOver && (
+        <div className={styles.dropIndicator} aria-hidden="true">
+          <Icon name="unfold_more" size={14} />
+          <span>Soltar aquí para mover a {columna.nombre}</span>
+        </div>
+      )}
 
       {/* Estado: Cargando */}
       {estado === "cargando" && (

@@ -28,8 +28,10 @@
 }
 
 .cardDragging {
-  opacity: 0.4;
+  opacity: 0.55;
+  transform: scale(0.98) rotate(-1deg);
   border: 2px dashed var(--color-primary);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Top Meta Row */
@@ -38,6 +40,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .idAndTag {
@@ -45,6 +48,8 @@
   align-items: center;
   gap: 0.4rem;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .cardCode {
@@ -54,6 +59,8 @@
   color: var(--text-muted);
   letter-spacing: 0.05em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tagBadge {
@@ -73,6 +80,7 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .priorityBadge {
@@ -183,10 +191,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   padding-top: 0.6rem;
   border-top: 1px solid var(--border-subtle);
   font-size: 11px;
   gap: 0.5rem;
+}
+
+.tagsWrap {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
 }
 
 .assignee {
