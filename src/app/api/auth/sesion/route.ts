@@ -4,8 +4,8 @@ import { comprobarOrigen } from "@/lib/auth";
 import {
   adminAuth,
   esCertificadoActivo,
-  tieneCredencialesGoogleConfiguradas,
   autenticarCredencialesEnFirebase,
+  firmarTokenSesion,
 } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +15,6 @@ const SesionInputSchema = z.object({
   correo: z.string().trim().email().optional(),
   password: z.string().min(6).optional(),
 });
-
-function empaquetarSesionFirmada(uid: string, correo: string): string {
-  const rol = correo.includes("docente") || correo.includes("admin") ? "admin" : "usuario";
-  const datos = { uid, email: correo, rol, auth_time: Math.floor(Date.now() / 1000) };
-  return `demo-session-${Buffer.from(JSON.stringify(datos)).toString("base64")}`;
-}
 
 export const POST = async (request: Request) => {
   const cincoDiasMs = 5 * 24 * 60 * 60 * 1000;
@@ -62,10 +56,10 @@ export const POST = async (request: Request) => {
             expiresIn: cincoDiasMs,
           });
         } catch {
-          sessionCookie = empaquetarSesionFirmada(verificado.uid, verificado.correo);
+          sessionCookie = firmarTokenSesion(verificado.uid, verificado.correo);
         }
       } else {
-        sessionCookie = empaquetarSesionFirmada(verificado.uid, verificado.correo);
+        sessionCookie = firmarTokenSesion(verificado.uid, verificado.correo);
       }
     } catch (authErr: unknown) {
       const msg =
@@ -77,42 +71,29 @@ export const POST = async (request: Request) => {
   } else if (idToken) {
     // 2. Flujo por idToken directo (SDK Cliente o Bruno API)
     if (idToken.startsWith("demo-token-")) {
-      if (tieneCredencialesGoogleConfiguradas()) {
+      return NextResponse.json(
+        {
+          error:
+            "El acceso simulado está deshabilitado. Ingresa con un usuario registrado en Firebase.",
+        },
+        { status: 401 }
+      );
+    }
+    try {
+      if (!esCertificadoActivo() || typeof adminAuth.createSessionCookie !== "function") {
         return NextResponse.json(
-          {
-            error:
-              "El acceso simulado está deshabilitado. Ingresa con un usuario registrado en Firebase.",
-          },
+          { error: "El token proporcionado no pudo ser verificado." },
           { status: 401 }
         );
       }
-      const rawEncoded = idToken.substring("demo-token-".length);
-      try {
-        correoAutenticado = decodeURIComponent(
-          Buffer.from(rawEncoded, "base64").toString("utf-8")
-        );
-      } catch {
-        correoAutenticado = "usuario@demo.com";
-      }
-      const uid = `demo-${Buffer.from(correoAutenticado).toString("hex").substring(0, 16)}`;
-      sessionCookie = empaquetarSesionFirmada(uid, correoAutenticado);
-    } else {
-      try {
-        if (!esCertificadoActivo() || typeof adminAuth.createSessionCookie !== "function") {
-          return NextResponse.json(
-            { error: "El token proporcionado no pudo ser verificado." },
-            { status: 401 }
-          );
-        }
-        sessionCookie = await adminAuth.createSessionCookie(idToken, {
-          expiresIn: cincoDiasMs,
-        });
-      } catch {
-        return NextResponse.json(
-          { error: "El idToken de Firebase es inválido o ha expirado." },
-          { status: 401 }
-        );
-      }
+      sessionCookie = await adminAuth.createSessionCookie(idToken, {
+        expiresIn: cincoDiasMs,
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "El idToken de Firebase es inválido o ha expirado." },
+        { status: 401 }
+      );
     }
   } else {
     return NextResponse.json(

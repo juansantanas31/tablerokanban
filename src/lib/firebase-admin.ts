@@ -507,6 +507,69 @@ export async function autenticarCredencialesEnFirebase(
   };
 }
 
+function obtenerSecretoFirma(): string {
+  const base =
+    process.env.FIREBASE_PRIVATE_KEY ||
+    process.env.FIREBASE_PROJECT_ID ||
+    "kanban-test-secret";
+  return crypto.createHash("sha256").update(base).digest("hex");
+}
+
+export function firmarTokenSesion(uid: string, correo: string): string {
+  const rol = correo.includes("docente") || correo.includes("admin") ? "admin" : "usuario";
+  const payload = {
+    uid,
+    email: correo,
+    rol,
+    exp: Math.floor(Date.now() / 1000) + 5 * 24 * 60 * 60,
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto
+    .createHmac("sha256", obtenerSecretoFirma())
+    .update(payloadB64)
+    .digest("base64url");
+  return `fb-session-${payloadB64}.${sig}`;
+}
+
+export function verificarTokenSesionFirmado(
+  cookieVal: string
+): { uid: string; correo: string | null; rol: string } | null {
+  if (!cookieVal.startsWith("fb-session-")) return null;
+  const raw = cookieVal.substring("fb-session-".length);
+  const parts = raw.split(".");
+  if (parts.length !== 2) return null;
+
+  const [payloadB64, sig] = parts;
+  const expectedSig = crypto
+    .createHmac("sha256", obtenerSecretoFirma())
+    .update(payloadB64)
+    .digest("base64url");
+
+  if (sig.length !== expectedSig.length) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+    return null;
+  }
+
+  try {
+    const claims = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf-8")) as {
+      uid?: string;
+      email?: string;
+      rol?: string;
+      exp?: number;
+    };
+    if (!claims.uid || (claims.exp && claims.exp < Math.floor(Date.now() / 1000))) {
+      return null;
+    }
+    return {
+      uid: claims.uid,
+      correo: claims.email || null,
+      rol: claims.rol || "usuario",
+    };
+  } catch {
+    return null;
+  }
+}
+
 export const esCertificadoActivo = (): boolean =>
   globalThis.__kanban_firebase_cert_activo__ === true;
 export const adminAuth: Auth = authInstance;

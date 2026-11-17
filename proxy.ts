@@ -8,7 +8,8 @@ import type { NextRequest } from "next/server";
  * en cada Route Handler y Server Component con verifySessionCookie.
  */
 export function proxy(request: NextRequest) {
-  const tieneSesion = request.cookies.has("sesion");
+  const sesionCookie = request.cookies.get("sesion")?.value;
+  const tieneSesion = Boolean(sesionCookie && !sesionCookie.startsWith("demo-session-"));
   const esRutaProtegida = request.nextUrl.pathname.startsWith("/tableros");
 
   if (esRutaProtegida && !tieneSesion) {

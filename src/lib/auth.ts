@@ -1,4 +1,8 @@
-import { adminAuth, esCertificadoActivo } from "./firebase-admin";
+import {
+  adminAuth,
+  esCertificadoActivo,
+  verificarTokenSesionFirmado,
+} from "./firebase-admin";
 import { ErrorNoAutenticado, ErrorProhibido } from "./errores";
 
 export interface UsuarioSesion {
@@ -33,26 +37,22 @@ export async function requerirUsuario(request: Request): Promise<UsuarioSesion> 
   // 1. Intentar con cookie de sesión
   const cookieSesion = obtenerCookieSesion(request);
   if (cookieSesion) {
-    if (cookieSesion.startsWith("demo-session-")) {
-      try {
-        const raw = Buffer.from(cookieSesion.substring("demo-session-".length), "base64").toString("utf-8");
-        const claims = JSON.parse(raw);
-        return {
-          uid: claims.uid || "usr-demo-local",
-          correo: claims.email || null,
-          rol: claims.rol || "usuario",
-        };
-      } catch {
-        throw new ErrorNoAutenticado("La sesión demo es inválida");
+    // 1a. Cookie firmada con HMAC-SHA256 emitida tras validar credenciales reales en Firebase
+    if (cookieSesion.startsWith("fb-session-")) {
+      const verificado = verificarTokenSesionFirmado(cookieSesion);
+      if (!verificado) {
+        throw new ErrorNoAutenticado("La sesión ha expirado o es inválida");
       }
+      return verificado;
+    }
+
+    // 1b. Rechazar cookies heredadas de modo demo o sin firma válida
+    if (cookieSesion.startsWith("demo-session-")) {
+      throw new ErrorNoAutenticado("Sesión de demostración caducada. Inicia sesión con Firebase.");
     }
 
     if (typeof esCertificadoActivo === "function" && !esCertificadoActivo()) {
-      return {
-        uid: "usr-demo-local",
-        correo: "usuario@demo.com",
-        rol: "usuario",
-      };
+      throw new ErrorNoAutenticado("No se pudo verificar la sesión en el servidor.");
     }
 
     try {
