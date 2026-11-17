@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { adminAuth, esCertificadoActivo } from "@/lib/firebase-admin";
 import { comprobarOrigen } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +7,13 @@ export const dynamic = "force-dynamic";
 const SesionInputSchema = z.object({
   idToken: z.string().min(1, "El idToken es obligatorio"),
 });
+
+function construirCookieDemo(correo: string): string {
+  const uid = `demo-${Buffer.from(correo).toString("hex").substring(0, 16)}`;
+  const rol = correo.includes("docente") || correo.includes("admin") ? "admin" : "usuario";
+  const datos = { uid, email: correo, rol, auth_time: Math.floor(Date.now() / 1000) };
+  return `demo-session-${Buffer.from(JSON.stringify(datos)).toString("base64")}`;
+}
 
 export const POST = async (request: Request) => {
   const cincoDiasMs = 5 * 24 * 60 * 60 * 1000;
@@ -30,10 +36,8 @@ export const POST = async (request: Request) => {
     const { idToken } = SesionInputSchema.parse(body);
     let sessionCookie: string;
 
-    if (idToken.startsWith("demo-token-") || !esCertificadoActivo()) {
-      const rawEncoded = idToken.startsWith("demo-token-")
-        ? idToken.substring("demo-token-".length)
-        : "";
+    if (idToken.startsWith("demo-token-")) {
+      const rawEncoded = idToken.substring("demo-token-".length);
       let correo = "usuario@demo.com";
       try {
         if (rawEncoded) {
@@ -42,20 +46,20 @@ export const POST = async (request: Request) => {
       } catch {
         correo = "usuario@demo.com";
       }
-      const uid = `demo-${Buffer.from(correo).toString("hex").substring(0, 16)}`;
-      const rol = correo.includes("docente") || correo.includes("admin") ? "admin" : "usuario";
-      const datos = { uid, email: correo, rol, auth_time: Math.floor(Date.now() / 1000) };
-      sessionCookie = `demo-session-${Buffer.from(JSON.stringify(datos)).toString("base64")}`;
+      sessionCookie = construirCookieDemo(correo);
     } else {
       try {
-        sessionCookie = await adminAuth.createSessionCookie(idToken, {
-          expiresIn: cincoDiasMs,
-        });
+        const { adminAuth, esCertificadoActivo } = await import("@/lib/firebase-admin");
+        if (!esCertificadoActivo()) {
+          sessionCookie = construirCookieDemo("usuario@demo.com");
+        } else {
+          sessionCookie = await adminAuth.createSessionCookie(idToken, {
+            expiresIn: cincoDiasMs,
+          });
+        }
       } catch (adminErr) {
         console.warn("[sesion] Fallo createSessionCookie, usando sesión segura de respaldo:", adminErr);
-        const uid = "usr-contingencia";
-        const datos = { uid, email: "usuario@kanban.local", rol: "usuario", auth_time: Math.floor(Date.now() / 1000) };
-        sessionCookie = `demo-session-${Buffer.from(JSON.stringify(datos)).toString("base64")}`;
+        sessionCookie = construirCookieDemo("usuario@kanban.local");
       }
     }
 

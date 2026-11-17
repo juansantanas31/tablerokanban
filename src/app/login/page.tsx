@@ -93,17 +93,7 @@ export default function LoginPage() {
     setErrores({});
     const correoDemo = "admin@kanban.local";
     try {
-      const simToken = `demo-token-${btoa(encodeURIComponent(correoDemo))}`;
-      const res = await fetch("/api/auth/sesion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken: simToken }),
-      });
-
-      if (!res.ok) {
-        throw new Error("No se pudo iniciar la sesión demo");
-      }
-
+      await iniciarSesionConCorreo(correoDemo, "Admin123");
       setMensajeEstado(`Sesión demo iniciada para ${correoDemo}. Redirigiendo...`);
       setAnuncio("Sesión demo iniciada. Redirigiendo...");
       setTimeout(() => {

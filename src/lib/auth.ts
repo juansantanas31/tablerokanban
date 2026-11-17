@@ -47,7 +47,7 @@ export async function requerirUsuario(request: Request): Promise<UsuarioSesion> 
       }
     }
 
-    if (!esCertificadoActivo()) {
+    if (typeof esCertificadoActivo === "function" && !esCertificadoActivo()) {
       return {
         uid: "usr-demo-local",
         correo: "usuario@demo.com",
