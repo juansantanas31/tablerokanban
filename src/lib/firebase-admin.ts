@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
-import { initializeApp, getApps, getApp, cert, App } from "firebase-admin/app";
-import { getAuth, Auth } from "firebase-admin/auth";
-import { getFirestore, Firestore } from "firebase-admin/firestore";
+import { createRequire } from "node:module";
+import type { App } from "firebase-admin/app";
+import type { Auth } from "firebase-admin/auth";
+import type { Firestore } from "firebase-admin/firestore";
 
 declare global {
   var __kanban_firebase_cert_activo__: boolean | undefined;
@@ -43,58 +44,71 @@ function normalizarYValidarPrivateKey(rawKey: string): string | null {
   }
 }
 
-function obtenerAppAdmin(): App | null {
+let authInstance: Auth = {} as Auth;
+let dbInstance: Firestore = {} as Firestore;
+let appInstance: App | null = null;
+
+function inicializarFirebaseAdminSeguro(): void {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-  if (getApps().length > 0) {
-    return getApp();
+  if (!projectId || !clientEmail || !rawPrivateKey) {
+    globalThis.__kanban_firebase_cert_activo__ = false;
+    return;
   }
 
-  if (projectId && clientEmail && rawPrivateKey) {
-    const privateKeyValida = normalizarYValidarPrivateKey(rawPrivateKey);
-    if (privateKeyValida) {
-      try {
-        const appInstancia = initializeApp({
-          credential: cert({
-            projectId: projectId.trim().replace(/^["']|["',]+$/g, ""),
-            clientEmail: clientEmail.trim().replace(/^["']|["',]+$/g, ""),
-            privateKey: privateKeyValida,
-          }),
-        });
-        globalThis.__kanban_firebase_cert_activo__ = true;
-        return appInstancia;
-      } catch (err: unknown) {
-        console.warn(
-          "[firebase-admin] Error inicializando credencial de Firebase Admin:",
-          err instanceof Error ? err.message : err
-        );
-      }
-    } else {
-      console.warn(
-        "[firebase-admin] FIREBASE_PRIVATE_KEY ausente, incompleta o inválida en el entorno. Usando modo DemoStore."
-      );
-    }
+  const privateKeyValida = normalizarYValidarPrivateKey(rawPrivateKey);
+  if (!privateKeyValida) {
+    console.warn(
+      "[firebase-admin] FIREBASE_PRIVATE_KEY ausente, incompleta o inválida. Usando DemoStore."
+    );
+    globalThis.__kanban_firebase_cert_activo__ = false;
+    return;
   }
 
-  globalThis.__kanban_firebase_cert_activo__ = false;
-  return null;
-}
-
-const appInstance: App | null = obtenerAppAdmin();
-
-let authInstance: Auth = {} as Auth;
-let dbInstance: Firestore = {} as Firestore;
-
-if (appInstance && globalThis.__kanban_firebase_cert_activo__ === true) {
   try {
-    authInstance = getAuth(appInstance);
-    dbInstance = getFirestore(appInstance);
-  } catch {
+    const req = createRequire(import.meta.url);
+    let adminApp: typeof import("firebase-admin/app");
+    let adminAuthMod: typeof import("firebase-admin/auth");
+    let adminFirestoreMod: typeof import("firebase-admin/firestore");
+
+    try {
+      adminApp = req("firebase-admin/app");
+      adminAuthMod = req("firebase-admin/auth");
+      adminFirestoreMod = req("firebase-admin/firestore");
+    } catch {
+      const pkg = ["firebase", "admin"].join("-");
+      adminApp = req(`${pkg}/app`);
+      adminAuthMod = req(`${pkg}/auth`);
+      adminFirestoreMod = req(`${pkg}/firestore`);
+    }
+
+    if (adminApp.getApps().length > 0) {
+      appInstance = adminApp.getApp();
+    } else {
+      appInstance = adminApp.initializeApp({
+        credential: adminApp.cert({
+          projectId: projectId.trim().replace(/^["']|["',]+$/g, ""),
+          clientEmail: clientEmail.trim().replace(/^["']|["',]+$/g, ""),
+          privateKey: privateKeyValida,
+        }),
+      });
+    }
+
+    authInstance = adminAuthMod.getAuth(appInstance);
+    dbInstance = adminFirestoreMod.getFirestore(appInstance);
+    globalThis.__kanban_firebase_cert_activo__ = true;
+  } catch (err: unknown) {
+    console.warn(
+      "[firebase-admin] No se pudo cargar firebase-admin en este entorno Serverless; activando DemoStore:",
+      err instanceof Error ? err.message : err
+    );
     globalThis.__kanban_firebase_cert_activo__ = false;
   }
 }
+
+inicializarFirebaseAdminSeguro();
 
 export const esCertificadoActivo = (): boolean =>
   globalThis.__kanban_firebase_cert_activo__ === true;
