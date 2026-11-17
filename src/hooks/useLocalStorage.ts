@@ -1,27 +1,29 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 /**
  * Hook para manejar localStorage con mejora progresiva y manejo seguro de fallos.
- * Cumple con la Sección 5 (API del navegador: localStorage).
+ * Cumple con la Sección 5 (API del navegador: localStorage) evitando errores de hidratación SSR.
  */
 export function useLocalStorage<T>(
   key: string,
   valorInicial: T
 ): [T, (valor: T | ((val: T) => T)) => void] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === "undefined") {
-      return valorInicial;
-    }
+  // Inicializar siempre con valorInicial tanto en servidor como en el primer render de hidratación
+  const [storedValue, setStoredValue] = useState<T>(valorInicial);
+
+  useEffect(() => {
     try {
       const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : valorInicial;
+      if (item !== null) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStoredValue(JSON.parse(item) as T);
+      }
     } catch (error) {
       console.warn(`[useLocalStorage] No se pudo leer "${key}":`, error);
-      return valorInicial;
     }
-  });
+  }, [key]);
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {

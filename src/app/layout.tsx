@@ -26,7 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} dark`}>
+    <html
+      lang="es"
+      className={`${geistSans.variable} ${geistMono.variable} dark`}
+      suppressHydrationWarning
+    >
       <head>
         <link
           rel="stylesheet"
@@ -41,7 +45,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=optional"
         />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <a href="#contenido-principal" className="skip-link">
           Saltar al contenido principal
         </a>
