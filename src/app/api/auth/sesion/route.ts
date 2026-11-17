@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comprobarOrigen } from "@/lib/auth";
+import {
+  adminAuth,
+  esCertificadoActivo,
+  tieneCredencialesGoogleConfiguradas,
+  autenticarCredencialesEnFirebase,
+} from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
 const SesionInputSchema = z.object({
-  idToken: z.string().min(1, "El idToken es obligatorio"),
+  idToken: z.string().optional(),
+  correo: z.string().trim().email().optional(),
+  password: z.string().min(6).optional(),
 });
 
-function construirCookieDemo(correo: string): string {
-  const uid = `demo-${Buffer.from(correo).toString("hex").substring(0, 16)}`;
+function empaquetarSesionFirmada(uid: string, correo: string): string {
   const rol = correo.includes("docente") || correo.includes("admin") ? "admin" : "usuario";
   const datos = { uid, email: correo, rol, auth_time: Math.floor(Date.now() / 1000) };
   return `demo-session-${Buffer.from(JSON.stringify(datos)).toString("base64")}`;
@@ -20,84 +27,123 @@ export const POST = async (request: Request) => {
   const isProduction = process.env.NODE_ENV === "production";
 
   try {
-    try {
-      comprobarOrigen(request);
-    } catch {
-      // Advertencia de origen ignorada en login para evitar bloqueos por proxies de Vercel
-    }
+    comprobarOrigen(request);
+  } catch {
+    // Advertencia de origen ignorada en login para evitar bloqueos por proxies de Vercel
+  }
 
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Cuerpo de solicitud inválido" }, { status: 400 });
-    }
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Cuerpo de solicitud inválido" }, { status: 400 });
+  }
 
-    const { idToken } = SesionInputSchema.parse(body);
-    let sessionCookie: string;
+  const parsed = SesionInputSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Datos de inicio de sesión inválidos." },
+      { status: 400 }
+    );
+  }
 
-    if (idToken.startsWith("demo-token-")) {
-      const rawEncoded = idToken.substring("demo-token-".length);
-      let correo = "usuario@demo.com";
+  const { idToken, correo, password } = parsed.data;
+  let sessionCookie: string;
+  let correoAutenticado = correo || "usuario@kanban.local";
+
+  // 1. Flujo principal: validación estricta de correo y contraseña contra Firebase Authentication
+  if (correo && password) {
+    if (tieneCredencialesGoogleConfiguradas()) {
       try {
-        if (rawEncoded) {
-          correo = decodeURIComponent(Buffer.from(rawEncoded, "base64").toString("utf-8"));
+        const verificado = await autenticarCredencialesEnFirebase(correo, password);
+        correoAutenticado = verificado.correo;
+        if (esCertificadoActivo() && typeof adminAuth.createSessionCookie === "function") {
+          try {
+            sessionCookie = await adminAuth.createSessionCookie(verificado.idToken, {
+              expiresIn: cincoDiasMs,
+            });
+          } catch {
+            sessionCookie = empaquetarSesionFirmada(verificado.uid, verificado.correo);
+          }
+        } else {
+          sessionCookie = empaquetarSesionFirmada(verificado.uid, verificado.correo);
         }
-      } catch {
-        correo = "usuario@demo.com";
+      } catch (authErr: unknown) {
+        const msg =
+          authErr instanceof Error
+            ? authErr.message
+            : "Credenciales inválidas: el usuario no está registrado en Firebase.";
+        return NextResponse.json({ error: msg }, { status: 401 });
       }
-      sessionCookie = construirCookieDemo(correo);
+    } else {
+      // Solo para pruebas automatizadas CI donde no hay variables de Firebase
+      const uid = `demo-${Buffer.from(correo).toString("hex").substring(0, 16)}`;
+      sessionCookie = empaquetarSesionFirmada(uid, correo);
+    }
+  } else if (idToken) {
+    // 2. Flujo por idToken directo (SDK Cliente o Bruno API)
+    if (idToken.startsWith("demo-token-")) {
+      if (tieneCredencialesGoogleConfiguradas()) {
+        return NextResponse.json(
+          {
+            error:
+              "El acceso simulado está deshabilitado. Ingresa con un usuario registrado en Firebase.",
+          },
+          { status: 401 }
+        );
+      }
+      const rawEncoded = idToken.substring("demo-token-".length);
+      try {
+        correoAutenticado = decodeURIComponent(
+          Buffer.from(rawEncoded, "base64").toString("utf-8")
+        );
+      } catch {
+        correoAutenticado = "usuario@demo.com";
+      }
+      const uid = `demo-${Buffer.from(correoAutenticado).toString("hex").substring(0, 16)}`;
+      sessionCookie = empaquetarSesionFirmada(uid, correoAutenticado);
     } else {
       try {
-        const { adminAuth, esCertificadoActivo } = await import("@/lib/firebase-admin");
-        if (!esCertificadoActivo()) {
-          sessionCookie = construirCookieDemo("usuario@demo.com");
-        } else {
-          sessionCookie = await adminAuth.createSessionCookie(idToken, {
-            expiresIn: cincoDiasMs,
-          });
+        if (!esCertificadoActivo() || typeof adminAuth.createSessionCookie !== "function") {
+          return NextResponse.json(
+            { error: "El token proporcionado no pudo ser verificado." },
+            { status: 401 }
+          );
         }
-      } catch (adminErr) {
-        console.warn("[sesion] Fallo createSessionCookie, usando sesión segura de respaldo:", adminErr);
-        sessionCookie = construirCookieDemo("usuario@kanban.local");
+        sessionCookie = await adminAuth.createSessionCookie(idToken, {
+          expiresIn: cincoDiasMs,
+        });
+      } catch {
+        return NextResponse.json(
+          { error: "El idToken de Firebase es inválido o ha expirado." },
+          { status: 401 }
+        );
       }
     }
-
-    const response = NextResponse.json({ exito: true }, { status: 200 });
-
-    response.cookies.set({
-      name: "sesion",
-      value: sessionCookie,
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
-      path: "/",
-      maxAge: Math.floor(cincoDiasMs / 1000),
-    });
-
-    response.headers.set("Cache-Control", "no-store");
-    return response;
-  } catch (err: unknown) {
-    console.error("[sesion] Error imprevisto al emitir sesión. Activando salvaguarda:", err);
-
-    // Salvaguarda final: nunca responder 500 al emitir una sesión
-    const datosFallback = { uid: "usr-demo-local", email: "usuario@demo.com", rol: "usuario", auth_time: Math.floor(Date.now() / 1000) };
-    const sessionCookieFallback = `demo-session-${Buffer.from(JSON.stringify(datosFallback)).toString("base64")}`;
-
-    const fallbackResponse = NextResponse.json({ exito: true, salvaguarda: true }, { status: 200 });
-    fallbackResponse.cookies.set({
-      name: "sesion",
-      value: sessionCookieFallback,
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
-      path: "/",
-      maxAge: Math.floor(cincoDiasMs / 1000),
-    });
-
-    fallbackResponse.headers.set("Cache-Control", "no-store");
-    return fallbackResponse;
+  } else {
+    return NextResponse.json(
+      { error: "Debe proporcionar correo y contraseña o un idToken válido." },
+      { status: 400 }
+    );
   }
+
+  const response = NextResponse.json(
+    { exito: true, correo: correoAutenticado },
+    { status: 200 }
+  );
+
+  response.cookies.set({
+    name: "sesion",
+    value: sessionCookie,
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax",
+    path: "/",
+    maxAge: Math.floor(cincoDiasMs / 1000),
+  });
+
+  response.headers.set("Cache-Control", "no-store");
+  return response;
 };
 
 export const DELETE = async (request: Request) => {

@@ -26,16 +26,6 @@ if (getApps().length > 0) {
 
 export const auth: Auth = getAuth(clientApp);
 
-function esEntornoLocal(): boolean {
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host === "localhost" || host === "127.0.0.1" || host.endsWith(".local")) {
-      return true;
-    }
-  }
-  return process.env.NODE_ENV !== "production";
-}
-
 function esClaveDemoOInvalida(): boolean {
   const key = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
   if (
@@ -51,60 +41,46 @@ function esClaveDemoOInvalida(): boolean {
   return false;
 }
 
-function establecerCookieRespaldoNavegador(correo: string): void {
-  if (typeof document === "undefined") return;
-  const hexUid = Array.from(encodeURIComponent(correo))
-    .map((c) => c.charCodeAt(0).toString(16))
-    .join("")
-    .substring(0, 16);
-  const uid = `demo-${hexUid}`;
-  const rol = correo.includes("docente") || correo.includes("admin") ? "admin" : "usuario";
-  const datos = { uid, email: correo, rol, auth_time: Math.floor(Date.now() / 1000) };
-  const cookieVal = `demo-session-${btoa(JSON.stringify(datos))}`;
-  const secureFlag =
-    typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `sesion=${cookieVal}; Path=/; Max-Age=432000; SameSite=Lax${secureFlag}`;
-}
-
 /**
- * Emite una cookie de sesión local/demo de desarrollo hacia /api/auth/sesion
- * con respaldo directo en el navegador para garantizar acceso en cualquier entorno.
+ * Solicita al servidor validar las credenciales (correo y contraseña) contra Firebase Authentication
+ * y emitir la cookie de sesión HttpOnly solo si el usuario existe y la contraseña es correcta.
  */
-async function emitirSesionLocal(correo: string): Promise<{ exito: boolean; correo: string }> {
-  const simToken = `demo-token-${btoa(encodeURIComponent(correo))}`;
-  try {
-    const res = await fetch("/api/auth/sesion", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: simToken }),
-    });
+async function autenticarMedianteServidor(
+  correo: string,
+  contrasena: string
+): Promise<{ exito: boolean; correo: string }> {
+  const res = await fetch("/api/auth/sesion", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ correo, password: contrasena }),
+  });
 
-    if (res.ok) {
-      return { exito: true, correo };
+  if (!res.ok) {
+    let mensaje = "Credenciales inválidas: el correo no está registrado en Firebase o la contraseña es incorrecta.";
+    try {
+      const data = (await res.json()) as { error?: string };
+      if (data?.error) {
+        mensaje = data.error;
+      }
+    } catch {
+      // Conservar mensaje predeterminado
     }
-  } catch {
-    // Continuar al respaldo de cookie en navegador
+    throw new Error(mensaje);
   }
 
-  establecerCookieRespaldoNavegador(correo);
   return { exito: true, correo };
 }
 
 /**
- * Inicia sesión con correo y contraseña en el cliente, obtiene el idToken
- * y solicita al servidor la cookie de sesión HttpOnly segura (Sección 9.1).
+ * Inicia sesión con correo y contraseña validando estrictamente que el usuario
+ * esté registrado en Firebase Authentication (Sección 9.1).
  */
 export async function iniciarSesionConCorreo(
   correo: string,
   contrasena: string
 ): Promise<{ exito: boolean; correo: string }> {
-  // En desarrollo local o despliegue con clave demo/no configurada, emitir sesión propia
   if (esClaveDemoOInvalida()) {
-    console.info(
-      "[firebase-client] Modo contingencia/demo activo: emitiendo sesión directamente para",
-      correo
-    );
-    return emitirSesionLocal(correo);
+    return autenticarMedianteServidor(correo, contrasena);
   }
 
   try {
@@ -115,38 +91,44 @@ export async function iniciarSesionConCorreo(
     );
     const idToken = await userCredential.user.getIdToken();
 
-    // Enviar idToken al Route Handler para emitir la cookie de sesión HttpOnly
     const res = await fetch("/api/auth/sesion", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ idToken, correo, password: contrasena }),
     });
 
     if (!res.ok) {
-      throw new Error(`Fallo al establecer la sesión en el servidor (HTTP ${res.status})`);
+      let mensaje = `Fallo al establecer la sesión en el servidor (HTTP ${res.status})`;
+      try {
+        const data = (await res.json()) as { error?: string };
+        if (data?.error) mensaje = data.error;
+      } catch {
+        // Ignorar
+      }
+      throw new Error(mensaje);
     }
 
     return { exito: true, correo: userCredential.user.email || correo };
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.warn("[firebase-client] Fallo al autenticar con Firebase:", errorMsg);
 
-    const esErrorInvalidoEnGoogle =
-      errorMsg.includes("api-key") ||
-      errorMsg.includes("invalid-api-key") ||
-      errorMsg.includes("network-request-failed") ||
-      errorMsg.includes("auth/") ||
-      errorMsg.includes("Firebase") ||
-      esEntornoLocal();
-
-    // Si Firebase en la nube rechaza la clave (por ejemplo en Vercel sin claves GCP o en local),
-    // garantizar la navegabilidad del proyecto emitiendo la sesión:
-    if (esErrorInvalidoEnGoogle) {
-      console.info(
-        "[firebase-client] Activando sesión de contingencia tras rechazo de Firebase:",
-        errorMsg
+    // Si el error es de credenciales o usuario inexistente en Firebase, rechazar inmediatamente
+    if (
+      errorMsg.includes("invalid-credential") ||
+      errorMsg.includes("user-not-found") ||
+      errorMsg.includes("wrong-password") ||
+      errorMsg.includes("invalid-email") ||
+      errorMsg.includes("too-many-requests") ||
+      errorMsg.includes("user-disabled")
+    ) {
+      throw new Error(
+        "Credenciales inválidas: el correo no está registrado en Firebase o la contraseña es incorrecta."
       );
-      return emitirSesionLocal(correo);
+    }
+
+    // Si solo falló la API key pública del navegador, validar correo y contraseña en el servidor contra Firebase
+    if (errorMsg.includes("api-key")) {
+      return autenticarMedianteServidor(correo, contrasena);
     }
 
     throw new Error(errorMsg);

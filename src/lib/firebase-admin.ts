@@ -6,6 +6,7 @@ import type { Firestore } from "firebase-admin/firestore";
 
 declare global {
   var __kanban_firebase_cert_activo__: boolean | undefined;
+  var __kanban_firebase_web_api_key__: string | undefined;
 }
 
 /**
@@ -109,6 +110,142 @@ function inicializarFirebaseAdminSeguro(): void {
 }
 
 inicializarFirebaseAdminSeguro();
+
+export function tieneCredencialesGoogleConfiguradas(): boolean {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
+  if (!projectId || !clientEmail || !rawPrivateKey) return false;
+  return normalizarYValidarPrivateKey(rawPrivateKey) !== null;
+}
+
+async function obtenerWebApiKeyDelProyecto(): Promise<string> {
+  const envKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (
+    envKey &&
+    !envKey.includes("demo") &&
+    !envKey.includes("placeholder") &&
+    !envKey.startsWith("AIzaSy_") &&
+    envKey.length >= 35
+  ) {
+    return envKey.trim();
+  }
+
+  if (globalThis.__kanban_firebase_web_api_key__) {
+    return globalThis.__kanban_firebase_web_api_key__;
+  }
+
+  const projectId = process.env.FIREBASE_PROJECT_ID?.trim().replace(/^["']|["',]+$/g, "");
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim().replace(/^["']|["',]+$/g, "");
+  const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
+  const privateKey = rawPrivateKey ? normalizarYValidarPrivateKey(rawPrivateKey) : null;
+
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error("Credenciales de servicio de Firebase no configuradas.");
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(
+    JSON.stringify({
+      iss: clientEmail,
+      sub: clientEmail,
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: now + 3600,
+      scope:
+        "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/identitytoolkit",
+    })
+  ).toString("base64url");
+
+  const signature = crypto
+    .createSign("RSA-SHA256")
+    .update(`${header}.${payload}`)
+    .sign(privateKey, "base64url");
+
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${header}.${payload}.${signature}`,
+  });
+
+  if (!tokenRes.ok) {
+    throw new Error("No se pudo obtener token OAuth2 de Google Cloud.");
+  }
+
+  const tokenData = (await tokenRes.json()) as { access_token: string };
+  const cfgRes = await fetch(
+    `https://identitytoolkit.googleapis.com/admin/v2/projects/${projectId}/config`,
+    {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    }
+  );
+
+  if (!cfgRes.ok) {
+    throw new Error("No se pudo consultar la configuración de Identity Toolkit.");
+  }
+
+  const cfgData = (await cfgRes.json()) as { client?: { apiKey?: string } };
+  const apiKey = cfgData.client?.apiKey;
+  if (!apiKey) {
+    throw new Error("El proyecto de Firebase no tiene una API Key web activa.");
+  }
+
+  globalThis.__kanban_firebase_web_api_key__ = apiKey;
+  return apiKey;
+}
+
+/**
+ * Autentica correo y contraseña directamente contra Firebase Authentication (Google Identity Toolkit).
+ * Solo permite el acceso a usuarios registrados oficialmente en la consola de Firebase.
+ */
+export async function autenticarCredencialesEnFirebase(
+  correo: string,
+  contrasena: string
+): Promise<{ uid: string; correo: string; idToken: string }> {
+  const apiKey = await obtenerWebApiKeyDelProyecto();
+
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: correo.trim(),
+        password: contrasena,
+        returnSecureToken: true,
+      }),
+    }
+  );
+
+  const data = (await res.json()) as {
+    localId?: string;
+    email?: string;
+    idToken?: string;
+    error?: { message?: string };
+  };
+
+  if (!res.ok || !data.localId || !data.idToken) {
+    const code = data.error?.message || "INVALID_LOGIN_CREDENTIALS";
+    if (code.includes("TOO_MANY_ATTEMPTS")) {
+      throw new Error(
+        "Demasiados intentos fallidos. Por seguridad, intenta nuevamente más tarde."
+      );
+    }
+    if (code.includes("USER_DISABLED")) {
+      throw new Error("Esta cuenta de usuario ha sido deshabilitada en Firebase.");
+    }
+    throw new Error(
+      "Credenciales inválidas: el correo no está registrado en Firebase o la contraseña es incorrecta."
+    );
+  }
+
+  return {
+    uid: data.localId,
+    correo: data.email || correo.trim(),
+    idToken: data.idToken,
+  };
+}
 
 export const esCertificadoActivo = (): boolean =>
   globalThis.__kanban_firebase_cert_activo__ === true;
