@@ -53,32 +53,26 @@ export const POST = async (request: Request) => {
 
   // 1. Flujo principal: validación estricta de correo y contraseña contra Firebase Authentication
   if (correo && password) {
-    if (tieneCredencialesGoogleConfiguradas()) {
-      try {
-        const verificado = await autenticarCredencialesEnFirebase(correo, password);
-        correoAutenticado = verificado.correo;
-        if (esCertificadoActivo() && typeof adminAuth.createSessionCookie === "function") {
-          try {
-            sessionCookie = await adminAuth.createSessionCookie(verificado.idToken, {
-              expiresIn: cincoDiasMs,
-            });
-          } catch {
-            sessionCookie = empaquetarSesionFirmada(verificado.uid, verificado.correo);
-          }
-        } else {
+    try {
+      const verificado = await autenticarCredencialesEnFirebase(correo, password);
+      correoAutenticado = verificado.correo;
+      if (esCertificadoActivo() && typeof adminAuth.createSessionCookie === "function") {
+        try {
+          sessionCookie = await adminAuth.createSessionCookie(verificado.idToken, {
+            expiresIn: cincoDiasMs,
+          });
+        } catch {
           sessionCookie = empaquetarSesionFirmada(verificado.uid, verificado.correo);
         }
-      } catch (authErr: unknown) {
-        const msg =
-          authErr instanceof Error
-            ? authErr.message
-            : "Credenciales inválidas: el usuario no está registrado en Firebase.";
-        return NextResponse.json({ error: msg }, { status: 401 });
+      } else {
+        sessionCookie = empaquetarSesionFirmada(verificado.uid, verificado.correo);
       }
-    } else {
-      // Solo para pruebas automatizadas CI donde no hay variables de Firebase
-      const uid = `demo-${Buffer.from(correo).toString("hex").substring(0, 16)}`;
-      sessionCookie = empaquetarSesionFirmada(uid, correo);
+    } catch (authErr: unknown) {
+      const msg =
+        authErr instanceof Error
+          ? authErr.message
+          : "Credenciales inválidas: el usuario no está registrado en Firebase.";
+      return NextResponse.json({ error: msg }, { status: 401 });
     }
   } else if (idToken) {
     // 2. Flujo por idToken directo (SDK Cliente o Bruno API)
