@@ -99,6 +99,7 @@
 }
 
 .openLink {
+  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -113,7 +114,37 @@
 }
 
 .openLink:hover {
-  background-color: var(--color-primary-hover);
+  background-color: var(--color-primary-accent);
+}
+
+.boardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.deleteBoardButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background-color: transparent;
+  color: var(--color-danger);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-height: 44px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.deleteBoardButton:hover {
+  background-color: var(--color-danger-muted);
+  border-color: var(--color-danger);
 }
 
 /* Estados de Carga, Error y Vacío */

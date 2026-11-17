@@ -38,7 +38,8 @@ export type IconName =
   | "history"
   | "settings"
   | "error"
-  | "logout";
+  | "logout"
+  | "delete";
 
 interface IconProps extends React.SVGProps<SVGSVGElement> {
   name: IconName | string;
@@ -181,6 +182,10 @@ export function Icon({ name, size = 18, className, style, ...props }: IconProps)
       case "logout":
         return (
           <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
+        );
+      case "delete":
+        return (
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
         );
       default:
         return null;

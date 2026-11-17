@@ -297,3 +297,23 @@
   background-color: var(--bg-surface-card-hover);
   border-color: var(--border-default);
 }
+
+.deleteButton {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-sm);
+  min-height: 28px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.deleteButton:hover {
+  background-color: var(--color-danger-muted);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: var(--color-danger);
+}

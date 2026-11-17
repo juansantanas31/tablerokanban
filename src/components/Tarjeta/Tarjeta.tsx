@@ -12,6 +12,7 @@ interface TarjetaProps {
   tableroId?: string;
   onMoverTeclado?: (tarjetaId: string, columnaDestinoId: string) => void;
   onVerDetalle?: (tarjetaId: string) => void;
+  onEliminarTarjeta?: (tarjetaId: string) => void;
 }
 
 export function Tarjeta({
@@ -20,6 +21,7 @@ export function Tarjeta({
   tableroId,
   onMoverTeclado,
   onVerDetalle,
+  onEliminarTarjeta,
 }: TarjetaProps) {
   const otrasColumnas = columnasDisponibles.filter((c) => c.id !== tarjeta.columnaId);
   const selectId = useId();
@@ -162,6 +164,18 @@ export function Tarjeta({
             >
               <Icon name="open_in_new" size={13} />
               <span>Detalle</span>
+            </button>
+          )}
+
+          {onEliminarTarjeta && (
+            <button
+              type="button"
+              className={styles.deleteButton}
+              onClick={() => onEliminarTarjeta(tarjeta.id)}
+              aria-label={`Eliminar tarjeta: ${tarjeta.titulo}`}
+              title="Eliminar tarjeta"
+            >
+              <Icon name="delete" size={14} />
             </button>
           )}
         </div>

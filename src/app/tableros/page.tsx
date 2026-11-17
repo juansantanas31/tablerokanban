@@ -25,6 +25,8 @@ export default function TablerosPage() {
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [errorNombre, setErrorNombre] = useState("");
   const [creando, setCreando] = useState(false);
+  const [tableroAEliminar, setTableroAEliminar] = useState<Tablero | null>(null);
+  const [eliminandoTablero, setEliminandoTablero] = useState(false);
   const [anuncio, setAnuncio] = useState("Cargando lista de tableros...");
 
   const cargarTableros = useCallback(async () => {
@@ -133,6 +135,40 @@ export default function TablerosPage() {
     }
   };
 
+  const handleConfirmarEliminarTablero = async () => {
+    if (!tableroAEliminar || eliminandoTablero) return;
+    setEliminandoTablero(true);
+    const target = tableroAEliminar;
+
+    try {
+      await apiCliente.delete(`/api/tableros/${target.id}`);
+      setTableros((prev) => {
+        const restantes = prev.filter((item) => item.id !== target.id);
+        if (restantes.length === 0) {
+          setEstado("vacio");
+        }
+        return restantes;
+      });
+      if (ultimoTableroId === target.id) {
+        setUltimoTableroId(null);
+      }
+      setAnuncio(`Tablero "${target.nombre}" eliminado exitosamente.`);
+      setTableroAEliminar(null);
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        router.push("/login");
+        return;
+      }
+      const mensaje =
+        err instanceof ApiError ? err.message : "No se pudo eliminar el tablero.";
+      setMensajeError(mensaje);
+      setAnuncio(`Error al eliminar tablero: ${mensaje}`);
+      setTableroAEliminar(null);
+    } finally {
+      setEliminandoTablero(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <AriaLiveAnnouncer mensaje={anuncio} />
@@ -218,13 +254,25 @@ export default function TablerosPage() {
                     </span>
                   ))}
                 </div>
-                <Link
-                  href={`/tableros/${t.id}`}
-                  className={styles.openLink}
-                  onClick={() => setUltimoTableroId(t.id)}
-                >
-                  Abrir Tablero
-                </Link>
+                <div className={styles.boardActions}>
+                  <Link
+                    href={`/tableros/${t.id}`}
+                    className={styles.openLink}
+                    onClick={() => setUltimoTableroId(t.id)}
+                  >
+                    Abrir Tablero
+                  </Link>
+                  <button
+                    type="button"
+                    className={styles.deleteBoardButton}
+                    onClick={() => setTableroAEliminar(t)}
+                    aria-label={`Eliminar tablero: ${t.nombre}`}
+                    title="Eliminar tablero"
+                  >
+                    <Icon name="delete" size={16} />
+                    <span>Eliminar</span>
+                  </button>
+                </div>
               </article>
             </li>
           ))}
@@ -320,6 +368,60 @@ export default function TablerosPage() {
             </button>
           </div>
         </form>
+      </ModalDialog>
+
+      {/* Modal de confirmación para eliminar tablero */}
+      <ModalDialog
+        isOpen={!!tableroAEliminar}
+        onClose={() => {
+          if (!eliminandoTablero) setTableroAEliminar(null);
+        }}
+        titulo="Eliminar Tablero"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", margin: 0 }}>
+            ¿Estás seguro de que deseas eliminar el tablero{" "}
+            <strong style={{ color: "var(--text-primary)" }}>
+              {tableroAEliminar?.nombre}
+            </strong>
+            ? Se eliminarán también todas sus tarjetas de forma permanente.
+          </p>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+            <button
+              type="button"
+              onClick={() => setTableroAEliminar(null)}
+              disabled={eliminandoTablero}
+              style={{
+                background: "transparent",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-sm)",
+                padding: "0.5rem 1rem",
+                cursor: "pointer",
+                minHeight: "44px",
+                color: "var(--text-secondary)",
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmarEliminarTablero}
+              disabled={eliminandoTablero}
+              style={{
+                backgroundColor: "var(--color-danger)",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "var(--radius-sm)",
+                padding: "0.5rem 1.25rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                minHeight: "44px",
+              }}
+            >
+              {eliminandoTablero ? "Eliminando..." : "Eliminar Tablero"}
+            </button>
+          </div>
+        </div>
       </ModalDialog>
     </div>
   );

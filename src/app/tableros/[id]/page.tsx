@@ -72,6 +72,8 @@ export default function TableroDetallePage({ params }: PageProps) {
   const [isModalCrearOpen, setIsModalCrearOpen] = useState(false);
   const [columnaSeleccionadaId, setColumnaSeleccionadaId] = useState<string>("");
   const [tarjetaDetalleFallback, setTarjetaDetalleFallback] = useState<Tarjeta | null>(null);
+  const [tarjetaAEliminar, setTarjetaAEliminar] = useState<Tarjeta | null>(null);
+  const [eliminandoTarjeta, setEliminandoTarjeta] = useState(false);
   const [columnaTabSeleccionada, setColumnaTabSeleccionada] = useState<string | null>(null);
   const [arrastrandoActiva, setArrastrandoActiva] = useState(false);
   const [tabDragOverId, setTabDragOverId] = useState<string | null>(null);
@@ -353,6 +355,36 @@ export default function TableroDetallePage({ params }: PageProps) {
     setIsModalCrearOpen(true);
   };
 
+  const handleConfirmarEliminarTarjeta = async () => {
+    if (!tarjetaAEliminar || eliminandoTarjeta) return;
+    setEliminandoTarjeta(true);
+    setAvisoError(null);
+    const target = tarjetaAEliminar;
+
+    try {
+      await apiCliente.delete(
+        `/api/tableros/${tableroId}/tarjetas/${target.id}`
+      );
+      dispatch({ type: "ELIMINAR_TARJETA", payload: { tarjetaId: target.id } });
+      setAnuncioAccesible(`Tarjeta "${target.titulo}" eliminada exitosamente.`);
+      setTarjetaAEliminar(null);
+      if (tarjetaDetalleFallback?.id === target.id) {
+        setTarjetaDetalleFallback(null);
+      }
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        router.push("/login");
+        return;
+      }
+      const mensaje =
+        err instanceof ApiError ? err.message : "No se pudo eliminar la tarjeta.";
+      setAvisoError(mensaje);
+      setAnuncioAccesible(`Error al eliminar tarjeta: ${mensaje}`);
+    } finally {
+      setEliminandoTarjeta(false);
+    }
+  };
+
   if (estadoCarga === "cargando") {
     return (
       <div className={styles.container}>
@@ -549,6 +581,10 @@ export default function TableroDetallePage({ params }: PageProps) {
               onMoverTeclado={moverTarjetaAColumna}
               onDropTarjeta={moverTarjetaAColumna}
               onAgregarTarjeta={abrirModalCrear}
+              onEliminarTarjeta={(id) => {
+                const tarjeta = tarjetasOptimistas.find((t) => t.id === id);
+                if (tarjeta) setTarjetaAEliminar(tarjeta);
+              }}
               onVerDetalle={(id) => {
                 const tarjeta = tarjetasOptimistas.find((t) => t.id === id);
                 if (tarjeta) setTarjetaDetalleFallback(tarjeta);
@@ -586,6 +622,60 @@ export default function TableroDetallePage({ params }: PageProps) {
           />
         </ModalDialog>
       )}
+
+      {/* Modal de confirmación para eliminar tarjeta */}
+      <ModalDialog
+        isOpen={!!tarjetaAEliminar}
+        onClose={() => {
+          if (!eliminandoTarjeta) setTarjetaAEliminar(null);
+        }}
+        titulo="Confirmar eliminación"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", margin: 0 }}>
+            ¿Estás seguro de que deseas eliminar la tarjeta{" "}
+            <strong style={{ color: "var(--text-primary)" }}>
+              {tarjetaAEliminar?.titulo}
+            </strong>
+            ? Esta acción no se puede deshacer.
+          </p>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+            <button
+              type="button"
+              onClick={() => setTarjetaAEliminar(null)}
+              disabled={eliminandoTarjeta}
+              style={{
+                background: "transparent",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-sm)",
+                padding: "0.5rem 1rem",
+                cursor: "pointer",
+                minHeight: "44px",
+                color: "var(--text-secondary)",
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmarEliminarTarjeta}
+              disabled={eliminandoTarjeta}
+              style={{
+                backgroundColor: "var(--color-danger)",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "var(--radius-sm)",
+                padding: "0.5rem 1.25rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                minHeight: "44px",
+              }}
+            >
+              {eliminandoTarjeta ? "Eliminando..." : "Eliminar tarjeta"}
+            </button>
+          </div>
+        </div>
+      </ModalDialog>
     </div>
   );
 }

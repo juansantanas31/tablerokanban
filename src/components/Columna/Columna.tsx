@@ -20,6 +20,7 @@ interface ColumnaProps {
   onMoverTeclado?: (tarjetaId: string, columnaDestinoId: string) => void;
   onDropTarjeta?: (tarjetaId: string, columnaDestinoId: string) => void;
   onAgregarTarjeta?: (columnaId: string) => void;
+  onEliminarTarjeta?: (tarjetaId: string) => void;
 }
 
 export function Columna({
@@ -34,6 +35,7 @@ export function Columna({
   onMoverTeclado,
   onDropTarjeta,
   onAgregarTarjeta,
+  onEliminarTarjeta,
 }: ColumnaProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const columnaIdTitulo = `columna-titulo-${columna.id}`;
@@ -165,6 +167,7 @@ export function Columna({
               tableroId={tableroId}
               onMoverTeclado={onMoverTeclado}
               onVerDetalle={onVerDetalle}
+              onEliminarTarjeta={onEliminarTarjeta}
             />
           ))}
         </ul>
