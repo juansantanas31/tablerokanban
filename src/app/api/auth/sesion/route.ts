@@ -48,21 +48,32 @@ export const POST = manejar(async (request: Request) => {
   }
 
   const isProduction = process.env.NODE_ENV === "production";
-  const cookieValue = `sesion=${sessionCookie}; HttpOnly; ${
-    isProduction ? "Secure; " : ""
-  }SameSite=Lax; Path=/; Max-Age=${cincoDiasMs / 1000}`;
-
   const response = new NextResponse(null, { status: 204 });
-  response.headers.set("Set-Cookie", cookieValue);
+
+  response.cookies.set({
+    name: "sesion",
+    value: sessionCookie,
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax",
+    path: "/",
+    maxAge: Math.floor(cincoDiasMs / 1000),
+  });
+
   return response;
 });
 
 export const DELETE = manejar(async (request: Request) => {
   comprobarOrigen(request);
   const response = new NextResponse(null, { status: 204 });
-  response.headers.set(
-    "Set-Cookie",
-    "sesion=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
-  );
+  response.cookies.set({
+    name: "sesion",
+    value: "",
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+  });
   return response;
 });

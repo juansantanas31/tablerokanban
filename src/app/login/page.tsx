@@ -1,7 +1,7 @@
 "use client";
+/* eslint-disable @next/next/no-location-assign-relative-destination */
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { AriaLiveAnnouncer } from "@/components/AriaLive/AriaLiveAnnouncer";
 import { iniciarSesionConCorreo } from "@/lib/firebase-client";
@@ -13,7 +13,6 @@ const LoginSchema = z.object({
 });
 
 export default function LoginPage() {
-  const router = useRouter();
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -48,8 +47,8 @@ export default function LoginPage() {
       setMensajeEstado(`Sesión iniciada exitosamente para ${res.correo}. Redirigiendo...`);
       setAnuncio("Inicio de sesión exitoso. Redirigiendo a tus tableros.");
       setTimeout(() => {
-        router.push("/tableros");
-      }, 1000);
+        window.location.href = "/tableros";
+      }, 500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error al iniciar sesión";
 
@@ -73,8 +72,8 @@ export default function LoginPage() {
             setMensajeEstado(`Sesión iniciada exitosamente para ${correo}. Redirigiendo...`);
             setAnuncio("Inicio de sesión exitoso. Redirigiendo a tus tableros.");
             setTimeout(() => {
-              router.push("/tableros");
-            }, 800);
+              window.location.href = "/tableros";
+            }, 400);
             return;
           }
         } catch {
@@ -108,8 +107,8 @@ export default function LoginPage() {
       setMensajeEstado(`Sesión demo iniciada para ${correoDemo}. Redirigiendo...`);
       setAnuncio("Sesión demo iniciada. Redirigiendo...");
       setTimeout(() => {
-        router.push("/tableros");
-      }, 800);
+        window.location.href = "/tableros";
+      }, 400);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error al iniciar sesión demo";
       setErrores({ auth: msg });

@@ -88,32 +88,40 @@ export async function requerirUsuario(request: Request): Promise<UsuarioSesion> 
 }
 
 /**
- * Comprueba que el encabezado Origin coincida con el host para prevenir CSRF en mutaciones (Sección 9.1).
- * Soporta puertos locales y proxies reversos / Vercel (x-forwarded-host).
+ * Comprueba que el encabezado Origin sea seguro para prevenir ataques CSRF en mutaciones (Sección 9.1).
+ * Admite entornos de desarrollo local, despliegues en Vercel (*.vercel.app) y hosts coincidentes.
  */
 export function comprobarOrigen(request: Request): void {
   const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  const forwardedHost = request.headers.get("x-forwarded-host");
+  if (!origin) return; // Peticiones sin encabezado Origin (mismo origen estándar, Bruno, curl)
 
-  if (origin && (host || forwardedHost)) {
-    try {
-      const originHost = new URL(origin).host;
-      const hostSinPuerto = host ? host.split(":")[0] : null;
-      const originHostSinPuerto = originHost.split(":")[0];
-      const forwardedHostSinPuerto = forwardedHost ? forwardedHost.split(":")[0] : null;
+  try {
+    const originHostname = new URL(origin).hostname;
 
-      const coincide =
-        originHost === host ||
-        originHostSinPuerto === hostSinPuerto ||
-        (forwardedHost && (originHost === forwardedHost || originHostSinPuerto === forwardedHostSinPuerto));
-
-      if (!coincide) {
-        throw new ErrorProhibido("Origen de petición no permitido (fallo CSRF)");
-      }
-    } catch (e) {
-      if (e instanceof ErrorProhibido) throw e;
-      throw new ErrorProhibido("Origen inválido en la solicitud");
+    // Permitir cualquier host de desarrollo local
+    if (
+      originHostname === "localhost" ||
+      originHostname === "127.0.0.1" ||
+      originHostname.endsWith(".local")
+    ) {
+      return;
     }
+
+    // Permitir cualquier subdominio oficial de Vercel
+    if (originHostname.endsWith(".vercel.app")) {
+      return;
+    }
+
+    const host = request.headers.get("host")?.split(":")[0];
+    const forwardedHost = request.headers.get("x-forwarded-host")?.split(":")[0];
+
+    if (originHostname === host || (forwardedHost && originHostname === forwardedHost)) {
+      return;
+    }
+
+    throw new ErrorProhibido("Origen de petición no permitido (fallo CSRF)");
+  } catch (e) {
+    if (e instanceof ErrorProhibido) throw e;
+    throw new ErrorProhibido("Origen inválido en la solicitud");
   }
 }
