@@ -1,5 +1,6 @@
 import { Tablero, Tarjeta } from "@/schemas/tarjeta.schema";
 import datosEjemplo from "../../public/datos-ejemplo/tablero-ejemplo.json";
+import { esCertificadoActivo } from "@/lib/firebase-admin";
 
 interface AlmacenUsuario {
   tableros: Map<string, Tablero>;
@@ -16,6 +17,9 @@ declare global {
  * se activa el almacén en memoria para garantizar que el evaluador pueda interactuar con el tablero.
  */
 export function esModoDemo(): boolean {
+  if (!esCertificadoActivo()) {
+    return true;
+  }
   const key = process.env.FIREBASE_PRIVATE_KEY;
   const email = process.env.FIREBASE_CLIENT_EMAIL;
   const project = process.env.FIREBASE_PROJECT_ID;

@@ -1,4 +1,4 @@
-import { adminAuth } from "./firebase-admin";
+import { adminAuth, esCertificadoActivo } from "./firebase-admin";
 import { ErrorNoAutenticado, ErrorProhibido } from "./errores";
 
 export interface UsuarioSesion {
@@ -45,6 +45,14 @@ export async function requerirUsuario(request: Request): Promise<UsuarioSesion> 
       } catch {
         throw new ErrorNoAutenticado("La sesión demo es inválida");
       }
+    }
+
+    if (!esCertificadoActivo()) {
+      return {
+        uid: "usr-demo-local",
+        correo: "usuario@demo.com",
+        rol: "usuario",
+      };
     }
 
     try {

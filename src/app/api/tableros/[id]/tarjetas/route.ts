@@ -4,6 +4,8 @@ import { requerirUsuario, comprobarOrigen } from "@/lib/auth";
 import { TarjetaService } from "@/services/tarjeta.service";
 import { CrearTarjetaSchema } from "@/schemas/tarjeta.schema";
 
+export const dynamic = "force-dynamic";
+
 interface RouteParams {
   params: Promise<{ id: string }>;
 }

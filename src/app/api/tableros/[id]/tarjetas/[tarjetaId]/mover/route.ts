@@ -4,6 +4,8 @@ import { manejar } from "@/lib/http";
 import { requerirUsuario, comprobarOrigen } from "@/lib/auth";
 import { TarjetaService } from "@/services/tarjeta.service";
 
+export const dynamic = "force-dynamic";
+
 interface RouteParams {
   params: Promise<{ id: string; tarjetaId: string }>;
 }
